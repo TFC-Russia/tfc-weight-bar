@@ -2,6 +2,7 @@ package com.koenigstag.tfc_weight_bar;
 
 import com.koenigstag.tfc_curios_weight.CuriosHelpers;
 
+import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
@@ -33,7 +34,7 @@ public class ForgeClientEventHandler {
 
   @SubscribeEvent
   public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-    if (Config.enableModCalculations == false) {
+    if (Config.enableWeightCalculations == false) {
       return;
     }
 
@@ -60,40 +61,42 @@ public class ForgeClientEventHandler {
 
   @SubscribeEvent
   public static void itemToolTip(ItemTooltipEvent event) {
-    ItemStack stack = event.getItemStack();
-    int weight = WeightBarHelpers.getItemStackWeightInt(stack);
-    int countOverweight = WeightBarHelpers.getItemOverweightInt(stack);
+    final ItemStack stack = event.getItemStack();
+    final int weight = WeightBarHelpers.getItemStackWeightInt(stack);
+    final int countOverweight = WeightBarHelpers.getItemOverweightInt(stack);
 
-    String weightText = "Вес: " + weight;
+    final Component tooHeavyText = countOverweight >= 1 ? translateComponent(Constants.TooHeavyLangKey) : "";
 
-    if (countOverweight >= 1) {
-      weightText += " (Слишком тяжелый)";
-    }
-
-    Component text = Component.literal(weightText);
-    event.getToolTip().add(text);
+    final Component tooltipComponent = formatComponent(Constants.WeightTooltipFormatLangKey, weight, tooHeavyText);
+    event.getToolTip().add(tooltipComponent);
   }
 
   private static void displayCurrentWeightClientMessage(Player player, Level level, int playerInvWeight,
       int maxInvWeight,
       int hugeHeavyCount, double barPercentage, String barColor) {
     if (Config.enableUIBar == false && level.getGameTime() % showMessageEachTicks == 0) {
-      String message = chatMessageText(playerInvWeight, maxInvWeight, barPercentage);
+      Component message = createWeightMessage(playerInvWeight, maxInvWeight, barPercentage, hugeHeavyCount);
 
-      MutableComponent msgComponent = Component.literal(message);
-
+      MutableComponent msgComponent = message.copy();
       msgComponent.withStyle(getTextStyle(barColor));
 
       player.displayClientMessage(msgComponent, true);
 
-      Constants.debug(message);
+      Constants.debug(message.getString());
     }
   }
 
-  private static String chatMessageText(int playerInvWeight, int maxInvWeight, double barPercentage) {
-    String message = "Weight: " + playerInvWeight + "/" + maxInvWeight + " (" + Math.round(barPercentage * 100) + "%)";
+  private static Component createWeightMessage(int playerInvWeight, int maxInvWeight, double barPercentage, int hugeHeavyCount) {
+    boolean isOverburdened = WeightBarHelpers.getIsOverburdened(playerInvWeight, maxInvWeight, hugeHeavyCount);
 
-    return message;
+    if (isOverburdened) {
+      return translateComponent(Constants.WeightStatusOverburdenedLangKey);
+    }
+
+    return formatComponent(Constants.WeightMessageFormatLangKey,
+        playerInvWeight,
+        maxInvWeight,
+        Math.round(barPercentage * 100));
   }
 
   private static Style getTextStyle(String barColor) {
@@ -110,5 +113,14 @@ public class ForgeClientEventHandler {
     }
 
     return style;
+  }
+
+  // Utility methods for localization
+  private static Component translateComponent(String key) {
+    return Component.translatable(key);
+  }
+
+  private static Component formatComponent(String key, Object... args) {
+    return Component.translatable(key, args);
   }
 }

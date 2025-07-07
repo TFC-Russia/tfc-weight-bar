@@ -15,4 +15,9 @@ public class Constants {
       LOGGER.info(message);
     }
   }
+
+  public static final String TooHeavyLangKey = "tfc_weight_bar.tooltip.too_heavy_to_carry";
+  public static final String WeightTooltipFormatLangKey = "tfc_weight_bar.tooltip.weight_format";
+  public static final String WeightMessageFormatLangKey = "tfc_weight_bar.message.weight_format";
+  public static final String WeightStatusOverburdenedLangKey = "tfc_weight_bar.status.overburden";
 }

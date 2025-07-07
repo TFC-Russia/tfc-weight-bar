@@ -1,0 +1,6 @@
+{
+  "tfc_weight_bar.tooltip.too_heavy_to_carry": "Too Heavy!",
+  "tfc_weight_bar.tooltip.weight_format": "Weight: %d %s",
+  "tfc_weight_bar.message.weight_format": "Weight: %d/%d (%d%%)",
+  "tfc_weight_bar.status.overburden": "You are overburdened"
+}

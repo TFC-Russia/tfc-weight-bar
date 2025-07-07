@@ -1,0 +1,6 @@
+{
+  "tfc_weight_bar.tooltip.too_heavy_to_carry": "(Слишком тяжелый)",
+  "tfc_weight_bar.tooltip.weight_format": "Вес: %i %s",
+  "tfc_weight_bar.message.weight_format": "Вес: %d/%d (%d%%)",
+  "tfc_weight_bar.status.overburden": "Вы перегружены"
+}
