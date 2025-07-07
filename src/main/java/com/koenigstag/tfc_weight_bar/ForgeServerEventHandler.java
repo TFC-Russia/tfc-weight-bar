@@ -19,7 +19,7 @@ public final class ForgeServerEventHandler {
 
     bus.register(ForgeServerEventHandler.class);
 
-    Constants.info("Setup server event handler complete");
+    Constants.LOGGER.info("Setup server event handler complete");
   }
 
   @SubscribeEvent

@@ -28,7 +28,7 @@ public class ForgeClientEventHandler {
 
     bus.register(ForgeClientEventHandler.class);
 
-    Constants.info("Setup client event handler complete");
+    Constants.LOGGER.info("Setup client event handler complete");
   }
 
   @SubscribeEvent
