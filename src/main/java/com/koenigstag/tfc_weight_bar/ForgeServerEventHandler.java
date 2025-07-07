@@ -24,7 +24,7 @@ public final class ForgeServerEventHandler {
 
   @SubscribeEvent
   public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-    if (Config.enableModCalculations == false) {
+    if (Config.enableWeightCalculations == false) {
       return;
     }
 

@@ -28,17 +28,18 @@ public class WeightBarHelpers {
       return 0;
     }
 
-    return Config.maxInvWeight;
+    // Use the effective health percentage method
+    double effectiveHealthPercentage = getEffectiveHealthPercentage(player);
+
+    // Calculate max inventory weight based on effective health percentage
+    int adjustedMaxWeight = (int) Math.round(Config.maxInvWeight * effectiveHealthPercentage);
+
+    return adjustedMaxWeight;
   }
 
   public static double getBarPercentage(int playerInvWeight, Player player) {
     // 80 / 100 = 0.8
     return (double) playerInvWeight / (double) getMaxInventoryWeight(player);
-  }
-
-  public static double getBarPercentage(int playerInvWeight, int maxInvWeight) {
-    // 80 / 100 = 0.8
-    return (double) playerInvWeight / (double) maxInvWeight;
   }
 
   public static int getItemStackWeightInt(ItemStack itemStack) {
@@ -188,5 +189,49 @@ public class WeightBarHelpers {
   public static boolean getIsOverburdened(int playerInvWeight, int maxInvWeight, int hugeHeavyCount) {
     return WeightBarHelpers.isPlayerOverburdened(playerInvWeight, maxInvWeight)
         || hugeHeavyCount >= 2;
+  }
+
+  public static double getHealthPercentage(Player player) {
+    float currentHealth = player.getHealth();
+    float maxHealth = player.getMaxHealth();
+    return (double) currentHealth / (double) maxHealth;
+  }
+
+  public static double getEffectiveHealthPercentage(Player player) {
+    if (!Config.healthAffectsWeightCapacity) {
+      return 1.0;
+    }
+
+    double healthPercentage = getHealthPercentage(player);
+    return Math.max(Config.minHealthWeightPercentage, Math.min(1.0, healthPercentage));
+  }
+
+  public static String getPlayerWeightStatus(Player player) {
+    int currentWeight = calculatePlayerFullWeight(player);
+    int maxWeight = getMaxInventoryWeight(player);
+    double effectiveHealthPercentage = getEffectiveHealthPercentage(player);
+
+    if (effectiveHealthPercentage < 1.0) {
+      return String.format("Weight: %d/%d (Health: %.0f%%)", 
+          currentWeight, maxWeight, effectiveHealthPercentage * 100);
+    } else {
+      return String.format("Weight: %d/%d", currentWeight, maxWeight);
+    }
+  }
+
+  // Debug method to test health percentage logic
+  public static void debugHealthPercentage(Player player) {
+    double healthPercentage = getHealthPercentage(player);
+    double effectiveHealthPercentage = getEffectiveHealthPercentage(player);
+    int maxWeight = getMaxInventoryWeight(player);
+    
+    Constants.debug(String.format("Player Health: %.1f/%.1f (%.1f%%)", 
+        player.getHealth(), player.getMaxHealth(), healthPercentage * 100));
+    Constants.debug(String.format("Effective Health Percentage: %.1f%%", 
+        effectiveHealthPercentage * 100));
+    Constants.debug(String.format("Max Weight: %d (Config: %d)", 
+        maxWeight, Config.maxInvWeight));
+    Constants.debug(String.format("Health Affects Weight: %s", 
+        Config.healthAffectsWeightCapacity ? "YES" : "NO"));
   }
 }

@@ -28,9 +28,12 @@ public class Config {
         private static final ForgeConfigSpec.Builder CLIENT_BUILDER = new ForgeConfigSpec.Builder();
 
         private static final ForgeConfigSpec.BooleanValue ENABLE_UI_BAR = CLIENT_BUILDER
-                        .comment("WIP. Enable weight bar on UI. Default: false")
+                        .comment("Enable weight bar on UI. Default: false")
                         .define("enable_ui_bar", false);
 
+        private static final ForgeConfigSpec.ConfigValue<List<? extends String>> SLOT_NAME_STRINGS = CLIENT_BUILDER
+                        .comment("A list of slots to check in weight calculation.")
+                        .defineListAllowEmpty("curios_slots", List.of(), Config::validateSlotName);
 
         static final ForgeConfigSpec CLIENT_SPEC = CLIENT_BUILDER.build();
 
@@ -39,7 +42,7 @@ public class Config {
 
         private static final ForgeConfigSpec.BooleanValue ENABLE_WEIGHT_SYSTEM = SERVER_BUILDER
                         .comment("Enable the weight system on server. Default: true")
-                        .define("enable_weight_system", true);
+                        .define("enable_weight_calculations", true);
 
         private static final ForgeConfigSpec.BooleanValue ENABLE_WEIGHT_DEBUFFS = SERVER_BUILDER
                         .comment("Whether to enable weight debuffs. Default: true")
@@ -61,12 +64,20 @@ public class Config {
                         .comment("Percentage of max weight that is considered exhausted. Default: 80")
                         .defineInRange("exhausted_weight_percentage", 80, 0, 100);
 
+        private static final ForgeConfigSpec.BooleanValue HEALTH_AFFECTS_WEIGHT_CAPACITY = SERVER_BUILDER
+                        .comment("Whether player health affects maximum weight capacity. Default: true")
+                        .define("health_affects_weight_capacity", true);
+
+        private static final ForgeConfigSpec.DoubleValue MIN_HEALTH_WEIGHT_PERCENTAGE = SERVER_BUILDER
+                        .comment("Minimum weight capacity percentage when at low health. Default: 0.1 (10%)")
+                        .defineInRange("min_health_weight_percentage", 0.1, 0.0, 1.0);
+
         private static final ForgeConfigSpec.IntValue VERY_LIGHT_WEIGHT = SERVER_BUILDER
                         .comment("Weight of very light items. Default: 1")
                         .defineInRange("very_light_item_weight", 1, 0, Integer.MAX_VALUE);
 
         private static final ForgeConfigSpec.IntValue LIGHT_WEIGHT = SERVER_BUILDER
-                        .comment("Weight of very light items. Default: 4")
+                        .comment("Weight of light items. Default: 4")
                         .defineInRange("light_item_weight", 4, 0, Integer.MAX_VALUE);
 
         private static final ForgeConfigSpec.IntValue MEDIUM_WEIGHT = SERVER_BUILDER
@@ -74,46 +85,45 @@ public class Config {
                         .defineInRange("medium_item_weight", 16, 0, Integer.MAX_VALUE);
 
         private static final ForgeConfigSpec.IntValue HEAVY_WEIGHT = SERVER_BUILDER
-                        .comment("Weight of medium items. Default: 32")
+                        .comment("Weight of heavy items. Default: 32")
                         .defineInRange("heavy_item_weight", 32, 0, Integer.MAX_VALUE);
 
         private static final ForgeConfigSpec.IntValue VERY_HEAVY_WEIGHT = SERVER_BUILDER
-                        .comment("Weight of medium items. Default: 64")
+                        .comment("Weight of very heavy items. Default: 64")
                         .defineInRange("very_heavy_item_weight", 64, 0, Integer.MAX_VALUE);
-
-        private static final ForgeConfigSpec.ConfigValue<List<? extends String>> SLOT_NAME_STRINGS = SERVER_BUILDER
-                        .comment("A list of slots to check in weight calculation.")
-                        .defineListAllowEmpty("curios_slots", List.of(), Config::validateSlotName);
 
         static final ForgeConfigSpec SERVER_SPEC = SERVER_BUILDER.build();
 
         // Client config variables
         public static boolean enableUIBar;
+        public static List<ISlotType> curios_slots;
 
         // Server config variables
-        public static boolean enableModCalculations;
-        public static List<ISlotType> curios_slots;
+        public static boolean enableWeightCalculations;
         public static int maxInvWeight;
         public static int exhaustedWeightPercentage;
         public static int calculateWeightEachNTicks;
         public static boolean enableWeightDebuffs;
         public static boolean enableFoodExhaustion;
+        public static boolean healthAffectsWeightCapacity;
+        public static double minHealthWeightPercentage;
 
         @SubscribeEvent
         static void onLoad(final ModConfigEvent event) {
                 if (event.getConfig().getSpec() == CLIENT_SPEC) {
-                        // Common config
+                        // Client config
                         enableUIBar = ENABLE_UI_BAR.get();
-                } else if (event.getConfig().getSpec() == SERVER_SPEC) {
-                        // Server config
-                        enableModCalculations = SERVER_ENABLE_WEIGHT_SYSTEM.get();
-
                         curios_slots = SLOT_NAME_STRINGS.get().stream()
                                         .map(slotId -> CuriosApi.getSlot(slotId, getIsClient()).get())
                                         .collect(Collectors.toList());
-                        calculateWeightEachNTicks = CALCULATE_WEIGHT_EACH_N_TICKS.get();
+                } else if (event.getConfig().getSpec() == SERVER_SPEC) {
+                        // Server config
+                        enableWeightCalculations = ENABLE_WEIGHT_SYSTEM.get();
                         maxInvWeight = MAX_INV_WEIGHT.get();
                         exhaustedWeightPercentage = EXHAUSTED_WEIGHT_PERCENTAGE.get();
+                        healthAffectsWeightCapacity = HEALTH_AFFECTS_WEIGHT_CAPACITY.get();
+                        minHealthWeightPercentage = MIN_HEALTH_WEIGHT_PERCENTAGE.get();
+                        calculateWeightEachNTicks = CALCULATE_WEIGHT_EACH_N_TICKS.get();
                         enableWeightDebuffs = ENABLE_WEIGHT_DEBUFFS.get();
                         enableFoodExhaustion = ENABLE_FOOD_EXHAUSTION.get();
                 }
@@ -121,13 +131,14 @@ public class Config {
 
 
         public static int getWeightIntConfig(Weight weight) {
-                /*  From TFC Weight Enum
-                    Default values are:
-                    VERY_LIGHT(64), // 1 points
-                    LIGHT(32), // 4 points
-                    MEDIUM(16), // 16 points
-                    HEAVY(4), // 32 points
-                    VERY_HEAVY(1); // 64 points
+                /*
+                 * From TFC Weight Enum
+                 * Default values are:
+                 * VERY_LIGHT(64), // 1 points
+                 * LIGHT(32), // 4 points
+                 * MEDIUM(16), // 16 points
+                 * HEAVY(4), // 32 points
+                 * VERY_HEAVY(1); // 64 points
                 */
                 switch (weight) {
                         case VERY_LIGHT:
