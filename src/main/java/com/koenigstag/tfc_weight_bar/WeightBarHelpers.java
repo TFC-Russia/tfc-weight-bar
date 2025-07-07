@@ -45,14 +45,9 @@ public class WeightBarHelpers {
   public static int getItemStackWeightInt(ItemStack itemStack) {
     if (!itemStack.isEmpty()) {
 
-      IItemSize size = ItemSizeManager.get(itemStack);
-
+      int weightInt = getWeightInt(itemStack);
       int itemCount = itemStack.getCount();
-
-      int weightInt = Config.getWeightIntConfig(size.getWeight(itemStack));
-      int sizeInt = Config.getSizeIntConfig(size.getSize(itemStack));
-
-      int itemStackWeight = Math.round((weightInt + sizeInt) * itemCount);
+      int itemStackWeight = Math.round(weightInt * itemCount);
 
       // if item stack is item holder (e.g. backpack)
       LazyOptional<IItemHandler> itemHandlerCapability = itemStack.getCapability(ForgeCapabilities.ITEM_HANDLER);
@@ -224,14 +219,67 @@ public class WeightBarHelpers {
     double healthPercentage = getHealthPercentage(player);
     double effectiveHealthPercentage = getEffectiveHealthPercentage(player);
     int maxWeight = getMaxInventoryWeight(player);
-    
-    Constants.debug(String.format("Player Health: %.1f/%.1f (%.1f%%)", 
+
+    Constants.debug(String.format("Player Health: %.1f/%.1f (%.1f%%)",
         player.getHealth(), player.getMaxHealth(), healthPercentage * 100));
-    Constants.debug(String.format("Effective Health Percentage: %.1f%%", 
+    Constants.debug(String.format("Effective Health Percentage: %.1f%%",
         effectiveHealthPercentage * 100));
-    Constants.debug(String.format("Max Weight: %d (Config: %d)", 
+    Constants.debug(String.format("Max Weight: %d (Config: %d)",
         maxWeight, Config.maxInvWeight));
-    Constants.debug(String.format("Health Affects Weight: %s", 
+    Constants.debug(String.format("Health Affects Weight: %s",
         Config.healthAffectsWeightCapacity ? "YES" : "NO"));
+  }
+
+  public static int getWeightInt(ItemStack itemStack) {
+    int tagWeightInt = getWeightIntFromTag(itemStack);
+
+    if (tagWeightInt > 0) {
+      return tagWeightInt;
+    }
+
+    IItemSize size = ItemSizeManager.get(itemStack);
+    Weight weight = size.getWeight(itemStack);
+
+    /*
+     * From TFC Weight Enum
+     * Default values are:
+     * VERY_LIGHT(64), // 1 points
+     * LIGHT(32), // 4 points
+     * MEDIUM(16), // 16 points
+     * HEAVY(4), // 32 points
+     * VERY_HEAVY(1); // 64 points
+     */
+    switch (weight) {
+      case VERY_LIGHT:
+        return Config.veryLightWeightInt;
+      case LIGHT:
+        return Config.lightWeightInt;
+      case MEDIUM:
+        return Config.mediumWeightInt;
+      case HEAVY:
+        return Config.heavyWeightInt;
+      case VERY_HEAVY:
+        return Config.veryHeavyWeightInt;
+      default:
+        // any other item defaults to this int
+        return Config.veryLightWeightInt;
+    }
+  }
+
+  public static int getWeightIntFromTag(ItemStack itemStack) {
+    if (itemStack.is(Tags.Items.VERY_LIGHT)) {
+      return Config.veryLightWeightInt;
+    } else if (itemStack.is(Tags.Items.LIGHT)) {
+      return Config.lightWeightInt;
+    } else if (itemStack.is(Tags.Items.MEDIUM)) {
+      return Config.mediumWeightInt;
+    } else if (itemStack.is(Tags.Items.HEAVY)) {
+      return Config.heavyWeightInt;
+    } else if (itemStack.is(Tags.Items.VERY_HEAVY)) {
+      return Config.veryHeavyWeightInt;
+    }
+
+    // Default weight if no tag matches
+    return 0;
   }
 }

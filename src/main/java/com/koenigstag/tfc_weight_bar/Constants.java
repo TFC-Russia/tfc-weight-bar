@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 public class Constants {
   public static final String MOD_ID = "tfc_weight_bar";
 
-  public static final Logger LOGGER = LogUtils.getLogger(MOD_ID);
+  public static final Logger LOGGER = LogUtils.getLogger();
 
   public static final boolean DEBUG_MODE = false;
 

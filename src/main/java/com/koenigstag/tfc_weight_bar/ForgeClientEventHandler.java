@@ -65,7 +65,7 @@ public class ForgeClientEventHandler {
     final int weight = WeightBarHelpers.getItemStackWeightInt(stack);
     final int countOverweight = WeightBarHelpers.getItemOverweightInt(stack);
 
-    final Component tooHeavyText = countOverweight >= 1 ? translateComponent(Constants.TooHeavyLangKey) : "";
+    final Component tooHeavyText = countOverweight >= 1 ? translateComponent(Constants.TooHeavyLangKey) : Component.empty();
 
     final Component tooltipComponent = formatComponent(Constants.WeightTooltipFormatLangKey, weight, tooHeavyText);
     event.getToolTip().add(tooltipComponent);
