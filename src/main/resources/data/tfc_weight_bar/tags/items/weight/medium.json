@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "#tfc:normal_ore_pieces"
+    "#tfc:normal_ore_pieces",
+    "#tfc:minerals"
   ]
 }

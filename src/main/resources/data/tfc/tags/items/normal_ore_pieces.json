@@ -1,0 +1,22 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:ore/normal_native_copper",
+    "tfc:ore/normal_native_gold",
+    "tfc:ore/normal_hematite",
+    "tfc:ore/normal_native_silver",
+    "tfc:ore/normal_cassiterite",
+    "tfc:ore/normal_bismuthinite",
+    "tfc:ore/normal_garnierite",
+    "tfc:ore/normal_malachite",
+    "tfc:ore/normal_magnetite",
+    "tfc:ore/normal_limonite",
+    "tfc:ore/normal_sphalerite",
+    "tfc:ore/normal_tetrahedrite",
+
+    { "id": "dfc:ore/normal_bauxite", "required": false },
+    { "id": "dfc:ore/normal_galena", "required": false },
+    { "id": "dfc:ore/normal_native_aluminum", "required": false },
+    { "id": "dfc:ore/normal_native_platinum", "required": false }
+  ]
+}

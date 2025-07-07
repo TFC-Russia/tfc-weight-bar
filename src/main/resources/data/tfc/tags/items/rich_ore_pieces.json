@@ -1,0 +1,22 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:ore/rich_native_copper",
+    "tfc:ore/rich_native_gold",
+    "tfc:ore/rich_hematite",
+    "tfc:ore/rich_native_silver",
+    "tfc:ore/rich_cassiterite",
+    "tfc:ore/rich_bismuthinite",
+    "tfc:ore/rich_garnierite",
+    "tfc:ore/rich_malachite",
+    "tfc:ore/rich_magnetite",
+    "tfc:ore/rich_limonite",
+    "tfc:ore/rich_sphalerite",
+    "tfc:ore/rich_tetrahedrite",
+
+    { "id": "dfc:ore/rich_bauxite", "required": false },
+    { "id": "dfc:ore/rich_galena", "required": false },
+    { "id": "dfc:ore/rich_native_aluminum", "required": false },
+    { "id": "dfc:ore/rich_native_platinum", "required": false }
+  ]
+}

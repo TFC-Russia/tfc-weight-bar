@@ -1,0 +1,18 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:ore/bituminous_coal",
+    "tfc:ore/lignite",
+    "tfc:ore/gypsum",
+    "tfc:ore/graphite",
+    "tfc:ore/sulfur",
+    "tfc:ore/cinnabar",
+    "tfc:ore/cryolite",
+    "tfc:ore/saltpeter",
+    "tfc:ore/sylvite",
+    "tfc:ore/borax",
+    "tfc:ore/halite",
+
+    { "id": "dfc:ore/asbestos", "required": false }
+  ]
+}
