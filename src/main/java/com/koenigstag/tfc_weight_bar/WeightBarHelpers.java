@@ -56,9 +56,7 @@ public class WeightBarHelpers {
         IItemHandler itemHandler = itemHandlerCapability.resolve().get();
 
         itemHolderWeight += calculateItemHandlerWeight(itemHandler);
-      }
-
-      if (itemStack.getItem() instanceof VesselItem) {
+      } else if (itemStack.getItem() instanceof VesselItem) {
         VesselLike vessel = VesselItem.getInventoryVessel(itemStack);
 
         itemHolderWeight += calculateItemHandlerWeight(vessel);
