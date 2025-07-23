@@ -12,6 +12,7 @@
     "tfc:ore/sylvite",
     "tfc:ore/borax",
     "tfc:ore/halite",
+    "tfc:kaolin_clay",
 
     { "id": "dfc:ore/asbestos", "required": false }
   ]
