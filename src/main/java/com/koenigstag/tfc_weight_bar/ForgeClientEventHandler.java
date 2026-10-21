@@ -2,11 +2,11 @@ package com.koenigstag.tfc_weight_bar;
 
 import com.koenigstag.tfc_curios_weight.CuriosHelpers;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.TextColor;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -100,16 +100,15 @@ public class ForgeClientEventHandler {
   }
 
   private static Style getTextStyle(String barColor) {
+    // Style is immutable: withColor returns a new instance
     Style style = Style.EMPTY;
 
     if (barColor.equals("red")) {
-      style.withColor(TextColor.parseColor("RED"));
+      style = style.withColor(ChatFormatting.RED);
     } else if (barColor.equals("pink")) {
-      style.withColor(TextColor.parseColor("LIGHT_PURPLE"));
+      style = style.withColor(ChatFormatting.LIGHT_PURPLE);
     } else if (barColor.equals("gray")) {
-      style.withColor(TextColor.parseColor("GRAY"));
-    } else {
-      style.withColor(TextColor.parseColor("RESET"));
+      style = style.withColor(ChatFormatting.GRAY);
     }
 
     return style;
