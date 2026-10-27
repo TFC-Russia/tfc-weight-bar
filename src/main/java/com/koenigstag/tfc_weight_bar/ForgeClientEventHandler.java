@@ -34,7 +34,8 @@ public class ForgeClientEventHandler {
 
   @SubscribeEvent
   public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-    if (Config.enableWeightCalculations == false) {
+    // fires for both START and END phases, calculate once per tick
+    if (Config.enableWeightCalculations == false || event.phase != TickEvent.Phase.END) {
       return;
     }
 
@@ -51,8 +52,6 @@ public class ForgeClientEventHandler {
       final double barPercentage = WeightBarHelpers.getBarPercentage(playerInvWeight, player);
 
       final String barColor = WeightBarHelpers.getBarColor(playerInvWeight, maxInvWeight, hugeHeavyCount);
-
-      // TODO add GUI/HUD bar
 
       displayCurrentWeightClientMessage(player, level, playerInvWeight, maxInvWeight, hugeHeavyCount, barPercentage,
           barColor);
