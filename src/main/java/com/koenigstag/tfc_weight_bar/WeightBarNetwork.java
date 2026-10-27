@@ -23,7 +23,7 @@ public final class WeightBarNetwork {
         .consumerMainThread(WeightSyncPacket::handle)
         .add();
 
-    Constants.info("Setup network channel complete");
+    Constants.LOGGER.info("Setup network channel complete");
   }
 
   // server side

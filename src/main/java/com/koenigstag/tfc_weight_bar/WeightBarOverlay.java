@@ -50,7 +50,7 @@ public class WeightBarOverlay {
     final Minecraft minecraft = Minecraft.getInstance();
     final WeightSyncPacket data = WeightBarClientData.get();
 
-    if (Config.enableModCalculations == false || Config.enableUIBar == false || data == null) {
+    if (Config.enableWeightCalculations == false || Config.enableUIBar == false || data == null) {
       return;
     }
 
@@ -65,7 +65,8 @@ public class WeightBarOverlay {
     final int x = width / 2 + 1;
     final int y = height - gui.rightHeight - 1;
 
-    final double barPercentage = Mth.clamp(WeightBarHelpers.getBarPercentage(data.weight(), data.maxWeight()), 0, 1);
+    final double barPercentage = data.maxWeight() <= 0 ? 0
+        : Mth.clamp((double) data.weight() / (double) data.maxWeight(), 0, 1);
     final int fillWidth = (int) (BAR_WIDTH * barPercentage);
 
     graphics.blit(TEXTURE, x, y, 0, 0, BAR_WIDTH, BAR_HEIGHT, TEXTURE_WIDTH, TEXTURE_HEIGHT);
