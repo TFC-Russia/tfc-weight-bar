@@ -16,6 +16,8 @@ public class TFCWeightBar {
 
     ForgeServerEventHandler.init();
 
+    WeightBarNetwork.init();
+
     Config.init();
   }
 

@@ -18,8 +18,8 @@ This is a simple TFC addon that adds a weight points to all items in player inve
 
 ## To Do List
 
-- [ ] Implement a gui/hud to display the weight bar
-- [ ] Add weight info to the item tooltip
+- [x] Implement a gui/hud to display the weight bar
+- [x] Add weight info to the item tooltip
 - [ ] Limit the list of item ids to be checked for weight calculations
 
 ## Contributing
@@ -30,7 +30,7 @@ PRs are welcome. You may also open an issue if you have any suggestions or found
 
 This mod is under the MIT License. This means that you can include it in your modpack without asking my permission.
 
-TFC, which this mod is an addon for, is under the EUPL license. When using portions of this mod, be aware that the TFC license may apply. You can view that license on that mod page.
+TFC, which this mod is an addon for, is under the EUPL license. When using portions of this mod, be aware that the TFC license may apply. You can view that license on that mod page. The HUD weight bar texture is the weight bar from TFCSU (TFC Russia server mod for 1.7.10), itself a recolor of the TFC HUD bar.
 
 TFCCuriosWeight is under the MIT License. You can view that license on that [mod page](https://github.com/koenigstag/tfc-curios-weight).
 

@@ -1,5 +1,6 @@
 package com.koenigstag.tfc_weight_bar;
 
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 
@@ -65,6 +66,12 @@ public class WeightBarData {
       if (Config.enableWeightDebuffs) {
         player.addEffect(WeightBarHelpers.getExhausted(false));
       }
+    }
+
+    // send current state to the client HUD bar
+    if (player instanceof ServerPlayer serverPlayer) {
+      WeightBarNetwork.sendToPlayer(serverPlayer,
+          new WeightSyncPacket(playerInvWeight, maxInvWeight, isExhausted, isOverburdened));
     }
 
     Constants.debug("Nickname: " + player.getName() + "; Current Weight: " + playerInvWeight + "; Max Weight: "

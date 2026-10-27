@@ -24,7 +24,8 @@ public final class ForgeServerEventHandler {
 
   @SubscribeEvent
   public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-    if (Config.enableWeightCalculations == false) {
+    // fires for both START and END phases, calculate once per tick
+    if (Config.enableWeightCalculations == false || event.phase != TickEvent.Phase.END) {
       return;
     }
 

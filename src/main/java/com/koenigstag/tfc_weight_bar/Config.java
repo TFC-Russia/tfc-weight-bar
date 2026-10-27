@@ -28,8 +28,8 @@ public class Config {
   private static final ForgeConfigSpec.Builder CLIENT_BUILDER = new ForgeConfigSpec.Builder();
 
   private static final ForgeConfigSpec.BooleanValue ENABLE_UI_BAR = CLIENT_BUILDER
-    .comment("Enable weight bar on UI. Default: false")
-    .define("enable_ui_bar", false);
+    .comment("Enable weight bar on HUD above the TFC food bar. When disabled, weight is shown in the action bar. Default: true")
+    .define("enable_ui_bar", true);
 
   private static final ForgeConfigSpec.ConfigValue<List<? extends String>> SLOT_NAME_STRINGS = CLIENT_BUILDER
     .comment("A list of slots to check in weight calculation.")
