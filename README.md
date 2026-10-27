@@ -26,7 +26,7 @@ This is a simple TFC addon that adds a weight points to all items in player inve
 
 ## Contributing
 
-PRs are welcome. You may also open an issue if you have any suggestions or found a bug.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the branch layout, how to build and what to check before opening a pull request.
 
 ## License
 
