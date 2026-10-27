@@ -1,5 +1,7 @@
 # TFC Weight Bar
 
+**English** · [Русский](README.ru.md)
+
 ## About
 
 This is a simple TFC addon that adds a weight points to all items in player inventory and Curios slots. If weight points exceed some amount player will receive debuff
