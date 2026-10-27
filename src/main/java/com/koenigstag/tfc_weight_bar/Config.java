@@ -1,98 +1,96 @@
 package com.koenigstag.tfc_weight_bar;
 
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.neoforged.neoforge.common.ModConfigSpec;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.config.ModConfigEvent;
 
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.type.ISlotType;
 
-import net.dries007.tfc.common.capabilities.size.Weight;
-import net.dries007.tfc.common.capabilities.size.Size;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Mod.EventBusSubscriber(modid = Constants.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = Constants.MOD_ID)
 public class Config {
 
-  public static void init() {
-    ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.CLIENT_SPEC);
-    ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Config.SERVER_SPEC);
+  public static void init(ModContainer container) {
+    container.registerConfig(ModConfig.Type.CLIENT, Config.CLIENT_SPEC);
+    container.registerConfig(ModConfig.Type.SERVER, Config.SERVER_SPEC);
   }
 
   // Client Config
-  private static final ForgeConfigSpec.Builder CLIENT_BUILDER = new ForgeConfigSpec.Builder();
+  private static final ModConfigSpec.Builder CLIENT_BUILDER = new ModConfigSpec.Builder();
 
-  private static final ForgeConfigSpec.BooleanValue ENABLE_UI_BAR = CLIENT_BUILDER
+  private static final ModConfigSpec.BooleanValue ENABLE_UI_BAR = CLIENT_BUILDER
     .comment("Enable weight bar on HUD above the TFC food bar. When disabled, weight is shown in the action bar. Default: true")
     .define("enable_ui_bar", true);
 
-  private static final ForgeConfigSpec.ConfigValue<List<? extends String>> SLOT_NAME_STRINGS = CLIENT_BUILDER
+  private static final ModConfigSpec.ConfigValue<List<? extends String>> SLOT_NAME_STRINGS = CLIENT_BUILDER
     .comment("A list of slots to check in weight calculation.")
-    .defineListAllowEmpty("curios_slots", List.of(), Config::validateSlotName);
+    .defineListAllowEmpty("curios_slots", List.of(), () -> "back", Config::validateSlotName);
 
-  static final ForgeConfigSpec CLIENT_SPEC = CLIENT_BUILDER.build();
+  static final ModConfigSpec CLIENT_SPEC = CLIENT_BUILDER.build();
 
   // Server Config
-  private static final ForgeConfigSpec.Builder SERVER_BUILDER = new ForgeConfigSpec.Builder();
+  private static final ModConfigSpec.Builder SERVER_BUILDER = new ModConfigSpec.Builder();
 
-  private static final ForgeConfigSpec.BooleanValue ENABLE_WEIGHT_SYSTEM = SERVER_BUILDER
+  private static final ModConfigSpec.BooleanValue ENABLE_WEIGHT_SYSTEM = SERVER_BUILDER
     .comment("Enable the weight system on server. Default: true")
     .define("enable_weight_calculations", true);
 
-  private static final ForgeConfigSpec.BooleanValue ENABLE_WEIGHT_DEBUFFS = SERVER_BUILDER
+  private static final ModConfigSpec.BooleanValue ENABLE_WEIGHT_DEBUFFS = SERVER_BUILDER
     .comment("Whether to enable weight debuffs. Default: true")
     .define("enable_weight_debuffs", true);
 
-  private static final ForgeConfigSpec.BooleanValue ENABLE_FOOD_EXHAUSTION = SERVER_BUILDER
+  private static final ModConfigSpec.BooleanValue ENABLE_FOOD_EXHAUSTION = SERVER_BUILDER
     .comment("Whether to enable food exhaustion coefficient. Default: true")
     .define("enable_food_exhaustion", true);
 
-  private static final ForgeConfigSpec.IntValue CALCULATE_WEIGHT_EACH_N_TICKS = SERVER_BUILDER
+  private static final ModConfigSpec.IntValue CALCULATE_WEIGHT_EACH_N_TICKS = SERVER_BUILDER
     .comment("Calculate weight every N ticks. Default: 20 ticks = 1 sec")
     .defineInRange("calculate_weight_each_n_ticks", 20, 1, Integer.MAX_VALUE);
 
-  private static final ForgeConfigSpec.IntValue MAX_INV_WEIGHT = SERVER_BUILDER
+  private static final ModConfigSpec.IntValue MAX_INV_WEIGHT = SERVER_BUILDER
     .comment("Maximum inventory weight. Default: 1000")
     .defineInRange("max_inv_weight", 1000, 0, Integer.MAX_VALUE);
 
-  private static final ForgeConfigSpec.IntValue EXHAUSTED_WEIGHT_PERCENTAGE = SERVER_BUILDER
+  private static final ModConfigSpec.IntValue EXHAUSTED_WEIGHT_PERCENTAGE = SERVER_BUILDER
     .comment("Percentage of max weight that is considered exhausted. Default: 80")
     .defineInRange("exhausted_weight_percentage", 80, 0, 100);
 
-  private static final ForgeConfigSpec.BooleanValue HEALTH_AFFECTS_WEIGHT_CAPACITY = SERVER_BUILDER
+  private static final ModConfigSpec.BooleanValue HEALTH_AFFECTS_WEIGHT_CAPACITY = SERVER_BUILDER
     .comment("Whether player health affects maximum weight capacity. Default: true")
     .define("health_affects_weight_capacity", true);
 
-  private static final ForgeConfigSpec.DoubleValue MIN_HEALTH_WEIGHT_PERCENTAGE = SERVER_BUILDER
+  private static final ModConfigSpec.DoubleValue MIN_HEALTH_WEIGHT_PERCENTAGE = SERVER_BUILDER
     .comment("Minimum weight capacity percentage when at low health. Default: 0.1 (10%)")
     .defineInRange("min_health_weight_percentage", 0.1, 0.0, 1.0);
 
-  private static final ForgeConfigSpec.IntValue VERY_LIGHT_WEIGHT = SERVER_BUILDER
+  private static final ModConfigSpec.IntValue VERY_LIGHT_WEIGHT = SERVER_BUILDER
     .comment("Weight of very light items. Default: 1")
     .defineInRange("very_light_item_weight", 1, 0, Integer.MAX_VALUE);
 
-  private static final ForgeConfigSpec.IntValue LIGHT_WEIGHT = SERVER_BUILDER
+  private static final ModConfigSpec.IntValue LIGHT_WEIGHT = SERVER_BUILDER
     .comment("Weight of light items. Default: 4")
     .defineInRange("light_item_weight", 4, 0, Integer.MAX_VALUE);
 
-  private static final ForgeConfigSpec.IntValue MEDIUM_WEIGHT = SERVER_BUILDER
+  private static final ModConfigSpec.IntValue MEDIUM_WEIGHT = SERVER_BUILDER
     .comment("Weight of medium items. Default: 16")
     .defineInRange("medium_item_weight", 16, 0, Integer.MAX_VALUE);
 
-  private static final ForgeConfigSpec.IntValue HEAVY_WEIGHT = SERVER_BUILDER
+  private static final ModConfigSpec.IntValue HEAVY_WEIGHT = SERVER_BUILDER
     .comment("Weight of heavy items. Default: 32")
     .defineInRange("heavy_item_weight", 32, 0, Integer.MAX_VALUE);
 
-  private static final ForgeConfigSpec.IntValue VERY_HEAVY_WEIGHT = SERVER_BUILDER
+  private static final ModConfigSpec.IntValue VERY_HEAVY_WEIGHT = SERVER_BUILDER
     .comment("Weight of very heavy items. Default: 64")
     .defineInRange("very_heavy_item_weight", 64, 0, Integer.MAX_VALUE);
 
-  static final ForgeConfigSpec SERVER_SPEC = SERVER_BUILDER.build();
+  static final ModConfigSpec SERVER_SPEC = SERVER_BUILDER.build();
 
   // Client config variables
   public static boolean enableUIBar;

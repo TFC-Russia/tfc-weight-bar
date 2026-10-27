@@ -1,33 +1,40 @@
 package com.koenigstag.tfc_weight_bar;
 
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
+/**
+ * 1.21 registers payloads through RegisterPayloadHandlersEvent instead of building a SimpleChannel, so this registers
+ * itself and needs no init call from the mod constructor.
+ */
+@EventBusSubscriber(modid = Constants.MOD_ID)
 public final class WeightBarNetwork {
   private static final String PROTOCOL_VERSION = "1";
 
-  private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-      new ResourceLocation(Constants.MOD_ID, "main"),
-      () -> PROTOCOL_VERSION,
-      PROTOCOL_VERSION::equals,
-      PROTOCOL_VERSION::equals);
+  private WeightBarNetwork() {
+  }
 
-  public static void init() {
-    CHANNEL.messageBuilder(WeightSyncPacket.class, 0, NetworkDirection.PLAY_TO_CLIENT)
-        .encoder(WeightSyncPacket::encode)
-        .decoder(WeightSyncPacket::decode)
-        .consumerMainThread(WeightSyncPacket::handle)
-        .add();
+  @SubscribeEvent
+  public static void register(final RegisterPayloadHandlersEvent event) {
+    final PayloadRegistrar registrar = event.registrar(PROTOCOL_VERSION);
+
+    registrar.playToClient(WeightSyncPacket.TYPE, WeightSyncPacket.STREAM_CODEC, WeightBarNetwork::handleOnClient);
 
     Constants.LOGGER.info("Setup network channel complete");
   }
 
+  // client side, the payload context already puts this on the main thread
+  private static void handleOnClient(final WeightSyncPacket packet, final IPayloadContext context) {
+    WeightBarClientData.update(packet);
+  }
+
   // server side
   public static void sendToPlayer(ServerPlayer player, WeightSyncPacket packet) {
-    CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
+    PacketDistributor.sendToPlayer(player, packet);
   }
 }

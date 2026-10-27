@@ -10,22 +10,21 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.ItemTooltipEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
-@Mod.EventBusSubscriber(modid = Constants.MOD_ID, bus = Bus.FORGE, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Constants.MOD_ID, value = Dist.CLIENT)
 public class ForgeClientEventHandler {
 
   private static int showMessageEachTicks = 20 * 10; // 10 sec
 
   public static void init() {
-    final IEventBus bus = MinecraftForge.EVENT_BUS;
+    final IEventBus bus = NeoForge.EVENT_BUS;
 
     bus.register(ForgeClientEventHandler.class);
 
@@ -33,13 +32,13 @@ public class ForgeClientEventHandler {
   }
 
   @SubscribeEvent
-  public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-    // fires for both START and END phases, calculate once per tick
-    if (Config.enableWeightCalculations == false || event.phase != TickEvent.Phase.END) {
+  public static void onPlayerTick(PlayerTickEvent.Post event) {
+    // PlayerTickEvent.Post fires once, after the tick
+    if (Config.enableWeightCalculations == false) {
       return;
     }
 
-    final Player player = event.player;
+    final Player player = event.getEntity();
     final Level level = player.level();
 
     if (level.getGameTime() % Config.calculateWeightEachNTicks == 0) {

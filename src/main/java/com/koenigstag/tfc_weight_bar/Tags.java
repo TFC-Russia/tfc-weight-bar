@@ -14,7 +14,7 @@ public class Tags {
     public static TagKey<Item> VERY_HEAVY = create("weight/very_heavy");
 
     private static TagKey<Item> create(String path) {
-      return TagKey.create(Registries.ITEM, new ResourceLocation(Constants.MOD_ID, path));
+      return TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(Constants.MOD_ID, path));
     }
   }
 }

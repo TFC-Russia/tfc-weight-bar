@@ -1,28 +1,31 @@
 package com.koenigstag.tfc_weight_bar;
 
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.Container;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.ItemStackHandler;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.ItemContainerContents;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
+import net.neoforged.neoforge.items.ItemStackHandler;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
-import net.dries007.tfc.common.capabilities.VesselLike;
-import net.dries007.tfc.common.capabilities.size.IItemSize;
-import net.dries007.tfc.common.capabilities.size.ItemSizeManager;
-import net.dries007.tfc.common.capabilities.size.Size;
-import net.dries007.tfc.common.capabilities.size.Weight;
-import net.dries007.tfc.common.items.VesselItem;
-import net.dries007.tfc.common.TFCEffects;
+import net.dries007.tfc.common.component.size.IItemSize;
+import net.dries007.tfc.common.component.size.ItemSizeManager;
+import net.dries007.tfc.common.component.size.Size;
+import net.dries007.tfc.common.component.size.Weight;
+import net.dries007.tfc.common.effect.TFCEffects;
+
+import javax.annotation.Nullable;
+import java.util.Optional;
 
 public class WeightBarHelpers {
 
@@ -48,6 +51,14 @@ public class WeightBarHelpers {
   }
 
   public static int getItemStackWeightInt(ItemStack itemStack) {
+    return getItemStackWeightInt(itemStack, null);
+  }
+
+  /**
+   * 1.21 replaced item NBT with data components, and reading a block entity inventory back out of a component needs a
+   * registry lookup. Callers that have one pass it; the rest get everything except that last case.
+   */
+  public static int getItemStackWeightInt(ItemStack itemStack, @Nullable HolderLookup.Provider registries) {
     if (!itemStack.isEmpty()) {
 
       int weightInt = getWeightInt(itemStack);
@@ -57,20 +68,26 @@ public class WeightBarHelpers {
       // Check for item holders (containers, backpacks, etc.)
       int itemHolderWeight = 0;
 
-      // Method 1: IItemHandler capability
-      LazyOptional<IItemHandler> itemHandlerCapability = itemStack.getCapability(ForgeCapabilities.ITEM_HANDLER);
-      if (itemHandlerCapability.isPresent()) {
-        IItemHandler itemHandler = itemHandlerCapability.resolve().get();
-        itemHolderWeight += calculateItemHandlerWeight(itemHandler);
+      // Method 1: the item handler capability. A TFC IVessel is an IItemHandler now, so vessels come through here
+      // and no longer need the VesselLike case they used to.
+      final IItemHandler itemHandler = itemStack.getCapability(Capabilities.ItemHandler.ITEM);
+
+      if (itemHandler != null) {
+        itemHolderWeight += calculateItemHandlerWeight(itemHandler, registries);
       }
-      // Method 2: TFC Vessel items
-      else if (itemStack.getItem() instanceof VesselItem) {
-        VesselLike vessel = VesselItem.getInventoryVessel(itemStack);
-        itemHolderWeight += calculateItemHandlerWeight(vessel);
+      // Method 2: the vanilla container component, which holds what a shulker box and friends carry
+      else if (itemStack.has(DataComponents.CONTAINER)) {
+        final ItemContainerContents contents = itemStack.get(DataComponents.CONTAINER);
+
+        if (contents != null) {
+          for (ItemStack stack : contents.nonEmptyItems()) {
+            itemHolderWeight += getItemStackWeightInt(stack, registries);
+          }
+        }
       }
-      // Method 3: Block entity items (chests, barrels, etc.)
-      else {
-        itemHolderWeight += getBlockEntityInventoryWeight(itemStack);
+      // Method 3: block entity items (TFC barrels and chests, vanilla block entities)
+      else if (registries != null) {
+        itemHolderWeight += getBlockEntityInventoryWeight(itemStack, registries);
       }
 
       return itemStackWeight + itemHolderWeight;
@@ -97,16 +114,17 @@ public class WeightBarHelpers {
 
     // Counts Curios slots to the full weight
     if (ModList.get().isLoaded("curios")) {
-      LazyOptional<ICuriosItemHandler> lazyCuriosInventory = CuriosApi.getCuriosInventory(livingEntity);
+      // Curios 9 returns a plain Optional; Curios 5 handed out a Forge LazyOptional
+      Optional<ICuriosItemHandler> maybeCuriosInventory = CuriosApi.getCuriosInventory(livingEntity);
 
-      if (lazyCuriosInventory.isPresent()) {
-        ICuriosItemHandler curiosInventory = lazyCuriosInventory.resolve().get();
+      if (maybeCuriosInventory.isPresent()) {
+        ICuriosItemHandler curiosInventory = maybeCuriosInventory.get();
         IItemHandlerModifiable curiosContainer = curiosInventory.getEquippedCurios();
 
         for (int i = 0; i < curiosContainer.getSlots(); i++) {
           final ItemStack stack = curiosContainer.getStackInSlot(i);
 
-          curiosWeightInt += WeightBarHelpers.getItemStackWeightInt(stack);
+          curiosWeightInt += getItemStackWeightInt(stack, livingEntity.registryAccess());
         }
       }
     }
@@ -117,7 +135,7 @@ public class WeightBarHelpers {
   public static int calculatePlayerFullWeight(final Player livingEntity) {
     int totalWeight = 0;
 
-    totalWeight += calculateContainerWeight(livingEntity.getInventory());
+    totalWeight += calculateContainerWeight(livingEntity.getInventory(), livingEntity.registryAccess());
     totalWeight += calculateCuriosSlotsWeight(livingEntity);
 
     return totalWeight;
@@ -145,12 +163,13 @@ public class WeightBarHelpers {
   }
 
   public static MobEffectInstance getOverburdened(boolean visible) {
-    return new MobEffectInstance(TFCEffects.OVERBURDENED.get(), Config.calculateWeightEachNTicks + 5, 0, false,
+    // MobEffectInstance takes a Holder in 1.21, and the TFC effect id carries a DeferredHolder
+    return new MobEffectInstance(TFCEffects.OVERBURDENED.holder(), Config.calculateWeightEachNTicks + 5, 0, false,
         visible);
   }
 
   public static MobEffectInstance getExhausted(boolean visible) {
-    return new MobEffectInstance(TFCEffects.EXHAUSTED.get(), Config.calculateWeightEachNTicks + 5, 0, false,
+    return new MobEffectInstance(TFCEffects.EXHAUSTED.holder(), Config.calculateWeightEachNTicks + 5, 0, false,
         visible);
   }
 
@@ -184,7 +203,7 @@ public class WeightBarHelpers {
     double effectiveHealthPercentage = getEffectiveHealthPercentage(player);
 
     if (effectiveHealthPercentage < 1.0) {
-      return String.format("Weight: %d/%d (Health: %.0f%%)", 
+      return String.format("Weight: %d/%d (Health: %.0f%%)",
           currentWeight, maxWeight, effectiveHealthPercentage * 100);
     } else {
       return String.format("Weight: %d/%d", currentWeight, maxWeight);
@@ -261,6 +280,10 @@ public class WeightBarHelpers {
   }
 
   public static int calculateContainerWeight(final Container container) {
+    return calculateContainerWeight(container, null);
+  }
+
+  public static int calculateContainerWeight(final Container container, @Nullable HolderLookup.Provider registries) {
     if (container == null) {
       return 0;
     }
@@ -270,13 +293,18 @@ public class WeightBarHelpers {
     for (int i = 0; i < container.getContainerSize(); i++) {
       ItemStack itemStack = container.getItem(i);
 
-      totalWeight += getItemStackWeightInt(itemStack);
+      totalWeight += getItemStackWeightInt(itemStack, registries);
     }
 
     return totalWeight;
   }
 
   public static int calculateItemHandlerWeight(final IItemHandler itemHandler) {
+    return calculateItemHandlerWeight(itemHandler, null);
+  }
+
+  public static int calculateItemHandlerWeight(final IItemHandler itemHandler,
+      @Nullable HolderLookup.Provider registries) {
     if (itemHandler == null) {
       return 0;
     }
@@ -286,69 +314,60 @@ public class WeightBarHelpers {
     for (int i = 0; i < itemHandler.getSlots(); i++) {
       ItemStack itemStack = itemHandler.getStackInSlot(i);
 
-      totalWeight += getItemStackWeightInt(itemStack);
+      totalWeight += getItemStackWeightInt(itemStack, registries);
     }
 
     return totalWeight;
   }
 
-  // Get inventory from Block Entity ItemStack
-  public static int getBlockEntityInventoryWeight(ItemStack itemStack) {
+  /**
+   * Get the inventory out of a block entity item. What used to sit in the item NBT is the BLOCK_ENTITY_DATA component
+   * in 1.21, and the tags inside it are the same ones the block entity writes, so the patterns below are unchanged.
+   */
+  public static int getBlockEntityInventoryWeight(ItemStack itemStack, HolderLookup.Provider registries) {
     if (itemStack.isEmpty()) {
       return 0;
     }
 
-    // Method 2: Check NBT data for stored inventory (TFC and vanilla patterns)
-    CompoundTag nbt = itemStack.getTag();
-    if (nbt != null) {
-      // TFC InventoryBlockEntity pattern: inventory stored as compound tag named "inventory"
-      if (nbt.contains("inventory", Tag.TAG_COMPOUND)) {
-        CompoundTag inventoryTag = nbt.getCompound("inventory");
-        return calculateNBTInventoryFromCompound(inventoryTag);
-      }
+    final CustomData blockEntityData = itemStack.get(DataComponents.BLOCK_ENTITY_DATA);
 
-      // Standard "Items" tag used by many block entities
-      if (nbt.contains("Items", Tag.TAG_LIST)) {
-        ListTag itemsList = nbt.getList("Items", Tag.TAG_COMPOUND);
-        return calculateNBTInventoryWeight(itemsList);
-      }
+    if (blockEntityData == null || blockEntityData.isEmpty()) {
+      return 0;
+    }
 
-      // Check for "Inventory" tag (some mods use this)
-      if (nbt.contains("Inventory", Tag.TAG_LIST)) {
-        ListTag inventoryList = nbt.getList("Inventory", Tag.TAG_COMPOUND);
-        return calculateNBTInventoryWeight(inventoryList);
-      }
+    final CompoundTag nbt = blockEntityData.copyTag();
 
-      // Check for BlockEntityTag (vanilla block entities)
-      if (nbt.contains("BlockEntityTag", Tag.TAG_COMPOUND)) {
-        CompoundTag blockEntityTag = nbt.getCompound("BlockEntityTag");
+    // TFC InventoryBlockEntity pattern: inventory stored as compound tag named "inventory"
+    if (nbt.contains("inventory", Tag.TAG_COMPOUND)) {
+      CompoundTag inventoryTag = nbt.getCompound("inventory");
+      return calculateNBTInventoryFromCompound(inventoryTag, registries);
+    }
 
-        // TFC pattern inside BlockEntityTag
-        if (blockEntityTag.contains("inventory", Tag.TAG_COMPOUND)) {
-          CompoundTag inventoryTag = blockEntityTag.getCompound("inventory");
-          return calculateNBTInventoryFromCompound(inventoryTag);
-        }
+    // Standard "Items" tag used by many block entities
+    if (nbt.contains("Items", Tag.TAG_LIST)) {
+      ListTag itemsList = nbt.getList("Items", Tag.TAG_COMPOUND);
+      return calculateNBTInventoryWeight(itemsList, registries);
+    }
 
-        // Vanilla pattern inside BlockEntityTag
-        if (blockEntityTag.contains("Items", Tag.TAG_LIST)) {
-          ListTag itemsList = blockEntityTag.getList("Items", Tag.TAG_COMPOUND);
-          return calculateNBTInventoryWeight(itemsList);
-        }
-      }
+    // Check for "Inventory" tag (some mods use this)
+    if (nbt.contains("Inventory", Tag.TAG_LIST)) {
+      ListTag inventoryList = nbt.getList("Inventory", Tag.TAG_COMPOUND);
+      return calculateNBTInventoryWeight(inventoryList, registries);
     }
 
     return 0;
   }
 
   // Helper method to calculate weight from NBT inventory data
-  private static int calculateNBTInventoryWeight(ListTag itemsList) {
+  private static int calculateNBTInventoryWeight(ListTag itemsList, HolderLookup.Provider registries) {
     int totalWeight = 0;
 
     for (int i = 0; i < itemsList.size(); i++) {
       CompoundTag itemTag = itemsList.getCompound(i);
-      ItemStack stack = ItemStack.of(itemTag);
+      // ItemStack.of is gone in 1.21: parsing a stack takes the registries and can fail
+      ItemStack stack = ItemStack.parseOptional(registries, itemTag);
       if (!stack.isEmpty()) {
-        totalWeight += getItemStackWeightInt(stack);
+        totalWeight += getItemStackWeightInt(stack, registries);
       }
     }
 
@@ -356,16 +375,16 @@ public class WeightBarHelpers {
   }
 
   // Helper method to calculate weight from TFC-style compound NBT inventory data
-  private static int calculateNBTInventoryFromCompound(CompoundTag inventoryTag) {
+  private static int calculateNBTInventoryFromCompound(CompoundTag inventoryTag, HolderLookup.Provider registries) {
     // Create temporary ItemStackHandler to deserialize the NBT (following TFC pattern)
     ItemStackHandler tempHandler = new ItemStackHandler();
-    tempHandler.deserializeNBT(inventoryTag);
+    tempHandler.deserializeNBT(registries, inventoryTag);
 
     int totalWeight = 0;
     for (int i = 0; i < tempHandler.getSlots(); i++) {
       ItemStack stack = tempHandler.getStackInSlot(i);
       if (!stack.isEmpty()) {
-        totalWeight += getItemStackWeightInt(stack);
+        totalWeight += getItemStackWeightInt(stack, registries);
       }
     }
 

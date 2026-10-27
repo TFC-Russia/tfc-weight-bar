@@ -1,24 +1,22 @@
 package com.koenigstag.tfc_weight_bar;
 
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 
 @Mod(Constants.MOD_ID)
 public class TFCWeightBar {
-  public TFCWeightBar() {
-    IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-
+  public TFCWeightBar(IEventBus modEventBus, ModContainer container) {
     modEventBus.addListener(this::commonSetup);
 
     ForgeClientEventHandler.init();
 
     ForgeServerEventHandler.init();
 
-    WeightBarNetwork.init();
+    // WeightBarNetwork registers itself through RegisterPayloadHandlersEvent
 
-    Config.init();
+    Config.init(container);
   }
 
   private void commonSetup(final FMLCommonSetupEvent event) {
