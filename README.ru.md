@@ -8,9 +8,10 @@
 
 ## Требования
 
-- Curios API v5.10.0+
-- TFCCuriosWeight v1.0.0+
-- TerraFirmaCraft v3.2.7+ для mc 1.20
+- Minecraft 1.21.1 на NeoForge 21.1.0+ (собрано против 21.1.265)
+- TerraFirmaCraft 4.2.0+ (собрано против 4.2.12)
+- Curios API 9.5.0+ (собрано против 9.5.1+1.21.1)
+- TFC Curios Weight 1.0.0+, собранный из его ветки 1.21.x
 
 ## История изменений
 
