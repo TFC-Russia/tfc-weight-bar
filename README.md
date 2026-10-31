@@ -10,8 +10,8 @@ This is a simple TFC addon that adds a weight points to all items in player inve
 
 - Minecraft 1.21.1 on NeoForge 21.1.0+ (built against 21.1.265)
 - TerraFirmaCraft 4.2.0+ (built against 4.2.12)
-- Curios API 9.5.0+ (built against 9.5.1+1.21.1)
-- TFC Curios Weight 1.0.0+, built from its own 1.21.x branch
+- Optional: Curios API 9.5.0+ (built against 9.5.1+1.21.1). With it, items in Curios slots add to the weight.
+- Optional: TFC Curios Weight 1.0.0+, built from its own 1.21.x branch. With it, TFC's rule for huge and very heavy items also covers Curios slots.
 
 ## Changelog
 

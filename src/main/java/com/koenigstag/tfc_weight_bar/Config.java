@@ -7,12 +7,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.config.ModConfigEvent;
 
-import top.theillusivec4.curios.api.CuriosApi;
-import top.theillusivec4.curios.api.type.ISlotType;
-
-
 import java.util.List;
-import java.util.stream.Collectors;
 
 @EventBusSubscriber(modid = Constants.MOD_ID)
 public class Config {
@@ -94,7 +89,7 @@ public class Config {
 
   // Client config variables
   public static boolean enableUIBar;
-  public static List<ISlotType> curios_slots;
+  public static List<String> curios_slots;
 
   // Server config variables
   public static boolean enableWeightCalculations;
@@ -117,9 +112,8 @@ public class Config {
     if (event.getConfig().getSpec() == CLIENT_SPEC) {
       // Client config
       enableUIBar = ENABLE_UI_BAR.get();
-      curios_slots = SLOT_NAME_STRINGS.get().stream()
-        .map(slotId -> CuriosApi.getSlot(slotId, getIsClient()).get())
-        .collect(Collectors.toList());
+      // Slot ids rather than Curios slot types, so that loading the config does not need Curios
+      curios_slots = List.copyOf(SLOT_NAME_STRINGS.get());
     } else if (event.getConfig().getSpec() == SERVER_SPEC) {
       // Server config
       enableWeightCalculations = ENABLE_WEIGHT_SYSTEM.get();
@@ -155,13 +149,9 @@ public class Config {
     return "red";
   }
 
-  private static boolean getIsClient() {
-    // TODO fix this. Needed in CuriosApi.getSlot(String id, boolean isClient)
-    return false;
-  }
-
   private static boolean validateSlotName(final Object obj) {
+    // Without Curios there are no slots to check the names against
     return obj instanceof final String slotId
-      && CuriosApi.getSlot(slotId, getIsClient()).isPresent();
+      && (!WeightBarHelpers.isCuriosLoaded() || CuriosCompat.isSlot(slotId));
   }
 }

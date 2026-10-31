@@ -14,10 +14,7 @@ import net.minecraft.world.item.component.ItemContainerContents;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import net.neoforged.neoforge.items.ItemStackHandler;
-import top.theillusivec4.curios.api.CuriosApi;
-import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
 import net.dries007.tfc.common.component.size.IItemSize;
 import net.dries007.tfc.common.component.size.ItemSizeManager;
 import net.dries007.tfc.common.component.size.Size;
@@ -25,9 +22,18 @@ import net.dries007.tfc.common.component.size.Weight;
 import net.dries007.tfc.common.effect.TFCEffects;
 
 import javax.annotation.Nullable;
-import java.util.Optional;
 
 public class WeightBarHelpers {
+
+  // Curios and TFC Curios Weight are optional: their classes are only reached through CuriosCompat and
+  // CuriosWeightCompat, behind these checks
+  public static boolean isCuriosLoaded() {
+    return ModList.get().isLoaded("curios");
+  }
+
+  public static boolean isCuriosWeightLoaded() {
+    return ModList.get().isLoaded("tfc_curios_weight");
+  }
 
   public static int getMaxInventoryWeight(Player player) {
     Container container = player.getInventory();
@@ -109,27 +115,28 @@ public class WeightBarHelpers {
     return 0;
   }
 
-  public static int calculateCuriosSlotsWeight(final Player livingEntity) {
-    int curiosWeightInt = 0;
-
-    // Counts Curios slots to the full weight
-    if (ModList.get().isLoaded("curios")) {
-      // Curios 9 returns a plain Optional; Curios 5 handed out a Forge LazyOptional
-      Optional<ICuriosItemHandler> maybeCuriosInventory = CuriosApi.getCuriosInventory(livingEntity);
-
-      if (maybeCuriosInventory.isPresent()) {
-        ICuriosItemHandler curiosInventory = maybeCuriosInventory.get();
-        IItemHandlerModifiable curiosContainer = curiosInventory.getEquippedCurios();
-
-        for (int i = 0; i < curiosContainer.getSlots(); i++) {
-          final ItemStack stack = curiosContainer.getStackInSlot(i);
-
-          curiosWeightInt += getItemStackWeightInt(stack, livingEntity.registryAccess());
-        }
-      }
+  /**
+   * How many huge and very heavy items the player carries. TFC Curios Weight also counts the Curios slots, with its
+   * exception for one backpack; without it this is TFC's own count over the inventory.
+   */
+  public static int countOverburdened(final Player player) {
+    if (isCuriosWeightLoaded()) {
+      return CuriosWeightCompat.countOverburdened(player);
     }
 
-    return curiosWeightInt;
+    final Container inventory = player.getInventory();
+    int count = 0;
+
+    for (int i = 0; i < inventory.getContainerSize(); i++) {
+      count += getItemOverweightInt(inventory.getItem(i));
+    }
+
+    return count;
+  }
+
+  public static int calculateCuriosSlotsWeight(final Player livingEntity) {
+    // Counts Curios slots to the full weight
+    return isCuriosLoaded() ? CuriosCompat.calculateCuriosSlotsWeight(livingEntity) : 0;
   }
 
   public static int calculatePlayerFullWeight(final Player livingEntity) {

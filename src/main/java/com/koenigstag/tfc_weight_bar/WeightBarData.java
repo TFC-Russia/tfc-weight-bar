@@ -5,9 +5,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.Map;
-
-import com.koenigstag.tfc_curios_weight.CuriosHelpers;
-
 import java.util.HashMap;
 
 public class WeightBarData {
@@ -35,7 +32,7 @@ public class WeightBarData {
 
     Constants.debug("TriggerServerSideEffects");
 
-    final int hugeHeavyCount = CuriosHelpers.countOverburdened(player);
+    final int hugeHeavyCount = WeightBarHelpers.countOverburdened(player);
 
     boolean isOverburdened = WeightBarHelpers.getIsOverburdened(playerInvWeight, maxInvWeight, hugeHeavyCount);
 
