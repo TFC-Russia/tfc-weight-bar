@@ -1,11 +1,13 @@
 package com.koenigstag.tfc_weight_bar;
 
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.IItemHandlerModifiable;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
+import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
+import top.theillusivec4.curios.api.type.inventory.IDynamicStackHandler;
+
+import java.util.Map;
 
 /**
  * Everything that touches the Curios API. Curios is optional, so call this only when
@@ -21,21 +23,20 @@ public final class CuriosCompat {
     LazyOptional<ICuriosItemHandler> lazyCuriosInventory = CuriosApi.getCuriosInventory(livingEntity);
 
     if (lazyCuriosInventory.isPresent()) {
-      ICuriosItemHandler curiosInventory = lazyCuriosInventory.resolve().get();
-      IItemHandlerModifiable curiosContainer = curiosInventory.getEquippedCurios();
+      // Slot type id to its slots; the curios_slots config picks which slot types count
+      for (Map.Entry<String, ICurioStacksHandler> slotType : lazyCuriosInventory.resolve().get().getCurios().entrySet()) {
+        if (!Config.isCuriosSlotWeighed(slotType.getKey())) {
+          continue;
+        }
 
-      for (int i = 0; i < curiosContainer.getSlots(); i++) {
-        final ItemStack stack = curiosContainer.getStackInSlot(i);
+        IDynamicStackHandler stacks = slotType.getValue().getStacks();
 
-        curiosWeightInt += WeightBarHelpers.getItemStackWeightInt(stack);
+        for (int i = 0; i < stacks.getSlots(); i++) {
+          curiosWeightInt += WeightBarHelpers.getItemStackWeightInt(stacks.getStackInSlot(i));
+        }
       }
     }
 
     return curiosWeightInt;
-  }
-
-  public static boolean isSlot(final String slotId) {
-    // TODO fix this. CuriosApi.getSlot(String id, boolean isClient) needs to know the side
-    return CuriosApi.getSlot(slotId, false).isPresent();
   }
 }

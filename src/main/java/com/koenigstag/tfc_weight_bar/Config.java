@@ -27,10 +27,6 @@ public class Config {
     .comment("Enable weight bar on HUD above the TFC food bar. When disabled, weight is shown in the action bar. Default: true")
     .define("enable_ui_bar", true);
 
-  private static final ForgeConfigSpec.ConfigValue<List<? extends String>> SLOT_NAME_STRINGS = CLIENT_BUILDER
-    .comment("A list of slots to check in weight calculation.")
-    .defineListAllowEmpty("curios_slots", List.of(), Config::validateSlotName);
-
   static final ForgeConfigSpec CLIENT_SPEC = CLIENT_BUILDER.build();
 
   // Server Config
@@ -88,13 +84,19 @@ public class Config {
     .comment("Weight of very heavy items. Default: 64")
     .defineInRange("very_heavy_item_weight", 64, 0, Integer.MAX_VALUE);
 
+  // The ids are not checked against Curios: its slots may not be loaded yet when the config is, and an id that no slot
+  // has simply matches nothing
+  private static final ForgeConfigSpec.ConfigValue<List<? extends String>> SLOT_NAME_STRINGS = SERVER_BUILDER
+    .comment("Curios slot types whose items count towards the weight, such as \"back\" or \"belt\". Empty counts every slot. Default: []")
+    .defineListAllowEmpty("curios_slots", List.of(), obj -> obj instanceof String);
+
   static final ForgeConfigSpec SERVER_SPEC = SERVER_BUILDER.build();
 
   // Client config variables
   public static boolean enableUIBar;
-  public static List<String> curios_slots;
 
   // Server config variables
+  public static List<String> curios_slots = List.of();
   public static boolean enableWeightCalculations;
   public static int maxInvWeight;
   public static int exhaustedWeightPercentage;
@@ -115,8 +117,6 @@ public class Config {
     if (event.getConfig().getSpec() == CLIENT_SPEC) {
       // Client config
       enableUIBar = ENABLE_UI_BAR.get();
-      // Slot ids rather than Curios slot types, so that loading the config does not need Curios
-      curios_slots = List.copyOf(SLOT_NAME_STRINGS.get());
     } else if (event.getConfig().getSpec() == SERVER_SPEC) {
       // Server config
       enableWeightCalculations = ENABLE_WEIGHT_SYSTEM.get();
@@ -133,7 +133,17 @@ public class Config {
       mediumWeightInt = MEDIUM_WEIGHT.get();
       heavyWeightInt = HEAVY_WEIGHT.get();
       veryHeavyWeightInt = VERY_HEAVY_WEIGHT.get();
+
+      // Slot ids rather than Curios slot types, so that loading the config does not need Curios
+      curios_slots = List.copyOf(SLOT_NAME_STRINGS.get());
     }
+  }
+
+  /**
+   * Whether the items in a Curios slot type count towards the weight: every slot does while curios_slots is empty.
+   */
+  public static boolean isCuriosSlotWeighed(final String slotId) {
+    return curios_slots.isEmpty() || curios_slots.contains(slotId);
   }
 
   public static double getExhaustedWeightCoefficient() {
@@ -150,11 +160,5 @@ public class Config {
 
   public static String getOverburdenedBarColor() {
     return "red";
-  }
-
-  private static boolean validateSlotName(final Object obj) {
-    // Without Curios there are no slots to check the names against
-    return obj instanceof final String slotId
-      && (!WeightBarHelpers.isCuriosLoaded() || CuriosCompat.isSlot(slotId));
   }
 }
