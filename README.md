@@ -14,9 +14,7 @@ This is a simple TFC addon that adds a weight points to all items in player inve
 
 ## Changelog
 
-### 1.0.0
-- Initial release of the mod. It adds weight calculations for all Player and Curios slots and all items.
-- There is a config option to disable the whole mod or debuffs/food exhaustion.
+See [CHANGELOG.md](CHANGELOG.md).
 
 ## To Do List
 
