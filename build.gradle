@@ -28,6 +28,10 @@ minecraft {
 
             property 'forge.logging.console.level', 'debug'
 
+            // Remap the mixin refmaps of TFC and Patchouli to the dev mappings
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+
             mods {
                 "${mod_id}" {
                     source sourceSets.main
@@ -83,6 +87,9 @@ dependencies {
 
     // uncomment when approved
     // implementation fg.deobf("com.koenigstag:tfc_curios_weight-1120348:$tfcCuriosFileID")
+
+    // TFC requires Patchouli, needed only to launch the game in dev
+    runtimeOnly fg.deobf("curse.maven:patchouli-306770:$patchouliFileID")
 }
 
 tasks.named('processResources', ProcessResources).configure {
