@@ -17,6 +17,8 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 
+import java.util.List;
+
 // HUD weight bar, the thick bar from the TFCSU (TFC Russia) 1.7.10 HUD
 @EventBusSubscriber(modid = Constants.MOD_ID, value = Dist.CLIENT)
 public class WeightBarOverlay {
@@ -36,8 +38,12 @@ public class WeightBarOverlay {
   private static final int EXHAUSTED_TEXT_COLOR = 0xFFFF00;
   private static final int OVERBURDENED_TEXT_COLOR = 0xFF0000;
 
-  // TFC registers its food and thirst bars above the vanilla food level
-  private static final ResourceLocation TFC_FOOD_OVERLAY = ResourceLocation.fromNamespaceAndPath("tfc", "food");
+  // TFC registers its thirst and food bars above the vanilla food level, food on top. TFC 4.2 builds their names
+  // without a namespace, so they come out as minecraft:food and minecraft:thirst; tfc:food is tried first in case
+  // that gets fixed.
+  private static final List<ResourceLocation> TFC_FOOD_OVERLAYS = List.of(
+      ResourceLocation.fromNamespaceAndPath("tfc", "food"),
+      ResourceLocation.withDefaultNamespace("food"));
 
   /**
    * 1.21 replaced the Forge overlay list with the vanilla layered draw: a layer is registered by name and is handed
@@ -46,13 +52,18 @@ public class WeightBarOverlay {
    */
   @SubscribeEvent
   public static void onRegisterLayers(RegisterGuiLayersEvent event) {
-    try {
-      // stack the weight bar on top of the TFC food bar
-      event.registerAbove(TFC_FOOD_OVERLAY, LAYER_ID, WeightBarOverlay::render);
-    } catch (IllegalArgumentException | IllegalStateException e) {
-      Constants.LOGGER.info("No tfc food layer to stack on, falling back to the vanilla food level");
-      event.registerAbove(VanillaGuiLayers.FOOD_LEVEL, LAYER_ID, WeightBarOverlay::render);
+    for (ResourceLocation tfcFood : TFC_FOOD_OVERLAYS) {
+      try {
+        // stack the weight bar on top of the TFC food bar
+        event.registerAbove(tfcFood, LAYER_ID, WeightBarOverlay::render);
+        return;
+      } catch (IllegalArgumentException | IllegalStateException e) {
+        // not registered under this name
+      }
     }
+
+    Constants.LOGGER.info("No tfc food layer to stack on, falling back to the vanilla food level");
+    event.registerAbove(VanillaGuiLayers.FOOD_LEVEL, LAYER_ID, WeightBarOverlay::render);
   }
 
   private static void render(GuiGraphics graphics, DeltaTracker deltaTracker) {
