@@ -73,14 +73,14 @@ description='''${mod_description}'''
 
 [[dependencies.${mod_id}]]
     modId="curios"
-    mandatory=true
+    mandatory=false
     versionRange="${curios_version_range}"
     ordering="AFTER"
     side="BOTH"
 
 [[dependencies.${mod_id}]]
     modId="tfc_curios_weight"
-    mandatory=true
+    mandatory=false
     versionRange="${tfc_curios_weight_version_range}"
     ordering="AFTER"
     side="BOTH"

@@ -1,7 +1,5 @@
 package com.koenigstag.tfc_weight_bar;
 
-import com.koenigstag.tfc_curios_weight.CuriosHelpers;
-
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
@@ -47,7 +45,7 @@ public class ForgeClientEventHandler {
 
       final int maxInvWeight = WeightBarHelpers.getMaxInventoryWeight(player);
 
-      final int hugeHeavyCount = CuriosHelpers.countOverburdened(player);
+      final int hugeHeavyCount = WeightBarHelpers.countOverburdened(player);
 
       final double barPercentage = WeightBarHelpers.getBarPercentage(playerInvWeight, player);
 
