@@ -73,7 +73,9 @@ jobs:
           loaders: ${{ steps.props.outputs.loader }}
           game-versions: ${{ steps.props.outputs.minecraft_version }}
           java: ${{ steps.props.outputs.java }}
+          # Slugs, not project ids: mc-publish looks an id up through the CurseForge Core API and drops the
+          # dependency without a word when that lookup fails, as it did for TerraFirmaCraft
           dependencies: |
-            tfc(required){curseforge:302973}
-            curios(optional){curseforge:309927}
-            tfc_curios_weight(optional){curseforge:1120348}
+            tfc(required){curseforge:terrafirmacraft}
+            curios(optional){curseforge:curios}
+            tfc_curios_weight(optional){curseforge:tfc-curios-weight}
