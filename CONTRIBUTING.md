@@ -42,8 +42,8 @@ TerraFirmaCraft and the Curios API are fetched by Gradle and need no manual down
 
 | Branch | Jar in `libs/` |
 | --- | --- |
-| `1.20.x` | `tfc_curios_weight-1.0.0.jar` |
-| `1.21.x` | `tfc_curios_weight-neoforge-1.21.1-1.0.0.jar` |
+| `1.20.x` | `tfc_curios_weight-1.0.0+1.20.1.jar` |
+| `1.21.x` | `tfc_curios_weight-1.0.0+1.21.1.jar` |
 
 To build against a changed TFC Curios Weight, build it there, drop the jar in `libs/` under the name above and bump `tfc_curios_weight_version` in `gradle.properties` if its version changed.
 
