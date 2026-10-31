@@ -66,6 +66,9 @@ dependencies {
     implementation "maven.modrinth:terrafirmacraft:${tfc_version}"
     implementation "maven.modrinth:curios:${curios_version}"
     implementation "com.koenigstag:tfc_curios_weight:${tfc_curios_weight_version}"
+
+    // TFC requires Patchouli, needed only to launch the game in dev
+    runtimeOnly "maven.modrinth:patchouli:${patchouli_version}"
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
