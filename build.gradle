@@ -65,7 +65,7 @@ repositories {
 dependencies {
     implementation "maven.modrinth:terrafirmacraft:${tfc_version}"
     implementation "maven.modrinth:curios:${curios_version}"
-    implementation "com.koenigstag:tfc_curios_weight-neoforge-${minecraft_version}:${tfc_curios_weight_version}"
+    implementation "com.koenigstag:tfc_curios_weight:${tfc_curios_weight_version}"
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
