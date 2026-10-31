@@ -23,7 +23,7 @@ jabba use
 ./gradlew build
 
 # on 1.20.x
-jabba use system@17.0.7
+jabba use system@17
 ./gradlew build
 ```
 
