@@ -1,0 +1,79 @@
+name: Publish
+
+# Builds the jar of the commit a release points at and uploads it to CurseForge
+# and to that GitHub release. The same file lives on 1.20.x and 1.21.x: the
+# versions, the loader and the JDK come from the branch being built.
+#
+# Run it by hand (Actions > Publish > Run workflow) to only build the jar.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Read the build properties
+        id: props
+        run: |
+          prop() { grep -E "^$1=" gradle.properties | cut -d= -f2- | tr -d '\r'; }
+          mod_version=$(prop mod_version)
+          {
+            echo "mod_version=$mod_version"
+            echo "minecraft_version=$(prop minecraft_version)"
+            # 1.21.x builds on NeoForge, 1.20.x on Forge
+            if [ -n "$(prop neo_version)" ]; then echo "loader=neoforge"; else echo "loader=forge"; fi
+            # .jabbarc names the JDK, e.g. system@17
+            echo "java=$(tr -d '\r' < .jabbarc | sed -E 's/^.*@([0-9]+).*$/\1/')"
+          } >> "$GITHUB_OUTPUT"
+          cat "$GITHUB_OUTPUT"
+
+          # A tag must name the version it ships: v1.0.0+1.20.1 for mod_version=1.0.0+1.20.1
+          if [ "$GITHUB_EVENT_NAME" = release ] && [ "$GITHUB_REF_NAME" != "v$mod_version" ]; then
+            echo "::error::Release tag $GITHUB_REF_NAME does not match mod_version $mod_version, expected v$mod_version"
+            exit 1
+          fi
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ steps.props.outputs.java }}
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Build
+        run: |
+          chmod +x gradlew
+          ./gradlew build
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: tfc_weight_bar-${{ steps.props.outputs.mod_version }}
+          path: build/libs/tfc_weight_bar-*.jar
+
+      - name: Upload to CurseForge and the GitHub release
+        if: github.event_name == 'release'
+        uses: Kira-NT/mc-publish@52307b03863581dec6b652b83e597aec02ebb075 # v3.3.1
+        with:
+          curseforge-id: 1776579
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          files: build/libs/tfc_weight_bar-*.jar
+          name: TFC Weight Bar ${{ steps.props.outputs.mod_version }}
+          version: ${{ steps.props.outputs.mod_version }}
+          version-type: ${{ github.event.release.prerelease && 'beta' || 'release' }}
+          changelog: ${{ github.event.release.body }}
+          loaders: ${{ steps.props.outputs.loader }}
+          game-versions: ${{ steps.props.outputs.minecraft_version }}
+          java: ${{ steps.props.outputs.java }}
+          dependencies: |
+            tfc(required){curseforge:302973}
+            curios(optional){curseforge:309927}
+            tfc_curios_weight(optional){curseforge:1120348}
