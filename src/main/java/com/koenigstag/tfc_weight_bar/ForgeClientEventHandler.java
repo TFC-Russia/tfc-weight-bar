@@ -40,6 +40,11 @@ public class ForgeClientEventHandler {
     final Player player = event.player;
     final Level level = player.level();
 
+    // Creative and spectator players carry no weight: the server skips them, so the weight message does too
+    if (player.getAbilities().invulnerable) {
+      return;
+    }
+
     if (level.getGameTime() % Config.calculateWeightEachNTicks == 0) {
       final int playerInvWeight = WeightBarHelpers.calculatePlayerFullWeight(player);
 
