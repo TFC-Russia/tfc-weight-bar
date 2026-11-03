@@ -111,6 +111,11 @@ public class Config {
 
   @SubscribeEvent
   static void onLoad(final ModConfigEvent event) {
+    // Unloading comes when a world closes, and its values can no longer be read by then
+    if (event instanceof ModConfigEvent.Unloading) {
+      return;
+    }
+
     if (event.getConfig().getSpec() == CLIENT_SPEC) {
       // Client config
       enableUIBar = ENABLE_UI_BAR.get();
