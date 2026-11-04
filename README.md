@@ -6,6 +6,10 @@
 
 This is a simple TFC addon that adds a weight points to all items in player inventory and Curios slots. If weight points exceed some amount player will receive debuff
 
+![The weight bar above the TFC food and thirst bars, at 720 of 1000](docs/weight-bar.png)
+
+The bar sits above the TFC food and thirst bars and shows the weight you carry out of your capacity. It turns pink once you are Exhausted and red once you are Overburdened.
+
 ## Requirements
 
 - This mod requires TerraFirmaCraft v3.2.7+ for mc 1.20
