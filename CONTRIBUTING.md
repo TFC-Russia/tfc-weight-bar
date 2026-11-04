@@ -69,8 +69,6 @@ The script stops before changing anything when the branch is not a release branc
 | `--prerelease` | Publish a pre-release, which goes up to CurseForge as a beta |
 | `--yes` | Skip the question |
 
-The first release, 1.0.0, is the version already in `gradle.properties`, so the script, which only moves the version forward, does not make it: create it by hand with `gh release create v1.0.0+<minecraft version> --target <branch> --title 1.0.0+<minecraft version> --notes-file <the 1.0.0 entry>`.
-
 The script needs git and the GitHub CLI (`gh`) signed in to an account that can push to the repository. On Windows, run it from Git Bash.
 
 The release notes become the CurseForge changelog. TerraFirmaCraft is listed there as a required dependency, the Curios API and TFC Curios Weight as optional ones. When the tag and `mod_version` disagree, the workflow stops before uploading anything. The upload needs a CurseForge API token in the `CURSEFORGE_TOKEN` repository secret.

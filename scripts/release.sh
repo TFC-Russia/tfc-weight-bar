@@ -47,8 +47,10 @@ ahead=$(git rev-list --count "origin/$branch..HEAD")
 
 old_base=${old_version%%+*}
 newest=$(printf '%s\n' "$old_base" "$version" | sort -V | tail -n 1)
-[ "$version" != "$old_base" ] && [ "$newest" = "$version" ] || die "$version is not newer than the current $old_version"
 [ -z "$(git ls-remote --tags origin "refs/tags/$tag")" ] || die "the tag $tag already exists on origin"
+# The version in gradle.properties counts as unreleased while its tag does not exist,
+# so a mod's first release can be the version the template left sitting there.
+[ "$newest" = "$version" ] || die "$version is older than the current $old_version"
 
 # The changelog entry of this version becomes the release notes and the CurseForge changelog
 changelog() {
