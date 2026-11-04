@@ -1,5 +1,7 @@
 # TFC Weight Bar
 
+<img src="docs/avatar.png" alt="" width="120" align="right">
+
 [English](README.md) · **Русский**
 
 ## О моде
