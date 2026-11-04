@@ -9,10 +9,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
@@ -21,14 +19,6 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 public class ForgeClientEventHandler {
 
   private static int showMessageEachTicks = 20 * 10; // 10 sec
-
-  public static void init() {
-    final IEventBus bus = MinecraftForge.EVENT_BUS;
-
-    bus.register(ForgeClientEventHandler.class);
-
-    Constants.LOGGER.info("Setup client event handler complete");
-  }
 
   @SubscribeEvent
   public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
@@ -39,6 +29,11 @@ public class ForgeClientEventHandler {
 
     final Player player = event.player;
     final Level level = player.level();
+
+    // In singleplayer the integrated server posts its player ticks on this bus too: ForgeServerEventHandler handles them
+    if (!level.isClientSide()) {
+      return;
+    }
 
     // Creative and spectator players carry no weight: the server skips them, so the weight message does too
     if (player.getAbilities().invulnerable) {
