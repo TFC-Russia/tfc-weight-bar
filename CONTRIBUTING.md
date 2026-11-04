@@ -75,6 +75,8 @@ The script needs git and the GitHub CLI (`gh`) signed in to an account that can 
 
 The release notes become the CurseForge changelog. TerraFirmaCraft is listed there as a required dependency, the Curios API and TFC Curios Weight as optional ones. When the tag and `mod_version` disagree, the workflow stops before uploading anything. The upload needs a CurseForge API token in the `CURSEFORGE_TOKEN` repository secret.
 
+The description of the page is published by nothing at all: the CurseForge token cannot write it. It lives in [`mod-description.md`](mod-description.md), so that a change to it is reviewable, and it is pasted into the page by hand under Manage Project → Description. The same text is on both branches, because one page covers both game versions.
+
 To only build the jar on CI, run the workflow by hand: Actions → Publish → Run workflow.
 
 ## Before opening a pull request
