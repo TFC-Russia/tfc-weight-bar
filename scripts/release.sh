@@ -92,9 +92,13 @@ if ! $yes; then
   [[ $answer =~ ^[Yy]$ ]] || die "stopped, nothing changed"
 fi
 
-sed -i -E "s/^mod_version=.*/mod_version=$new_version/" gradle.properties
-[ "$(prop mod_version)" = "$new_version" ] || die "could not set mod_version in gradle.properties"
-git commit --quiet -m "Bump the version to $version" -- gradle.properties
+# A first release publishes the version the file already holds, and committing an
+# unchanged file exits 1, which under set -e would end the run before the push
+if [ "$old_version" != "$new_version" ]; then
+  sed -i -E "s/^mod_version=.*/mod_version=$new_version/" gradle.properties
+  [ "$(prop mod_version)" = "$new_version" ] || die "could not set mod_version in gradle.properties"
+  git commit --quiet -m "Bump the version to $version" -- gradle.properties
+fi
 git push --quiet origin "$branch"
 
 gh release create "$tag" --target "$branch" --title "$new_version" --notes "$notes" ${release_flags[@]+"${release_flags[@]}"} \
