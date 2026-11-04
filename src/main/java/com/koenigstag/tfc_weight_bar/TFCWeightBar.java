@@ -10,7 +10,8 @@ public class TFCWeightBar {
   public TFCWeightBar(IEventBus modEventBus, ModContainer container) {
     modEventBus.addListener(this::commonSetup);
 
-    ForgeClientEventHandler.init();
+    // ForgeClientEventHandler registers itself through @EventBusSubscriber, on the client only: on a dedicated
+    // server, where the client config never loads, it would send every player the weight message
 
     ForgeServerEventHandler.init();
 
