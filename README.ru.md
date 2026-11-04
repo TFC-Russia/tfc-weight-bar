@@ -1,16 +1,20 @@
 # TFC Weight Bar
 
-<img src="docs/avatar.png" alt="" width="120" align="right">
-
 [English](README.md) · **Русский**
 
 ## О моде
 
+<img src="docs/avatar.png" alt="" width="120" align="right">
+
 Простой аддон к TFC, который назначает вес всем предметам в инвентаре игрока и в слотах Curios. Если суммарный вес превышает пороговое значение, игрок получает дебафф.
+
+На CurseForge: [TFC Item Weight](https://www.curseforge.com/minecraft/mc-mods/tfc-item-weight).
 
 ![Полоса веса над полосами еды и жажды TFC, 720 из 1000](docs/weight-bar.png)
 
 Полоса стоит над полосами еды и жажды TFC и показывает, какой вес вы несёте и сколько можете унести. В состоянии Exhausted она розовеет, в состоянии Overburdened краснеет.
+
+<br clear="right">
 
 ## Требования
 
