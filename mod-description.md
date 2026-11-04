@@ -21,7 +21,7 @@ The project's other fields, which are also web-only:
   License  MIT
   Source   https://github.com/TFC-Russia/tfc-weight-bar
   Issues   https://github.com/TFC-Russia/tfc-weight-bar/issues
-  Avatar   tfc_weight_bar.png in this repository (512x512; CurseForge asks for 400x400)
+  Avatar   docs/avatar.png in this repository (512x512; CurseForge asks for 400x400)
   Page     https://www.curseforge.com/minecraft/mc-mods/tfc-item-weight, project id 1776579
 -->
 
