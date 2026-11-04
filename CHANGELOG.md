@@ -4,6 +4,9 @@
 
 Newest version first. The entry of a version is also its GitHub release notes and its changelog on CurseForge.
 
+## 1.0.2
+- The `enable_food_exhaustion` option works as described: a load past the Exhausted threshold makes the player hungrier, up to twice TFC's passive hunger at the maximum weight. Before, such a load stopped the player from getting hungry at all.
+
 ## 1.0.1
 - Creative and spectator players no longer see the weight message above the hotbar: weight does not apply to them.
 - Closing a world no longer logs an error: the config stops reading its values while it unloads.

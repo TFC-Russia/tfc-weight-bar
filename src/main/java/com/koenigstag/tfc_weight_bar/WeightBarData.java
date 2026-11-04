@@ -78,15 +78,19 @@ public class WeightBarData {
         + WeightBarHelpers.getBarPercentage(playerInvWeight, player));
   }
 
-  // server side
-  private static void serverAddPlayerFoodExhaustion(Player player, int playerInvWeight, int maxInvWeight) {
-    final int overburdened = playerInvWeight - maxInvWeight;
-    final int overburdenedPercent = (int) Mth.clamp(overburdened / (float) maxInvWeight * 100, 0, 100);
+  // The food exhaustion TFC causes every tick for its passive hunger
+  private static final float TFC_PASSIVE_EXHAUSTION_PER_TICK = 0.0033333334f;
 
-    if (overburdenedPercent > 0) {
-      player.getFoodData().addExhaustion(overburdenedPercent * 0.01f);
-    } else {
-      player.getFoodData().setExhaustion(0.01f);
-    }
+  // server side
+  // The load adds hunger from nothing where the exhausted range starts up to TFC's passive hunger once more at the
+  // maximum weight, for every tick since the last calculation
+  private static void serverAddPlayerFoodExhaustion(Player player, int playerInvWeight, int maxInvWeight) {
+    final double exhaustedWeight = maxInvWeight * Config.getExhaustedWeightCoefficient();
+    final double exhaustedRange = maxInvWeight - exhaustedWeight;
+    final float load = exhaustedRange > 0
+        ? (float) Mth.clamp((playerInvWeight - exhaustedWeight) / exhaustedRange, 0, 1)
+        : 1;
+
+    player.causeFoodExhaustion(load * TFC_PASSIVE_EXHAUSTION_PER_TICK * Config.calculateWeightEachNTicks);
   }
 }

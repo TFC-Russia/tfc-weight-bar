@@ -38,7 +38,7 @@ public class Config {
     .define("enable_weight_debuffs", true);
 
   private static final ModConfigSpec.BooleanValue ENABLE_FOOD_EXHAUSTION = SERVER_BUILDER
-    .comment("Whether to enable food exhaustion coefficient. Default: true")
+    .comment("Whether an exhausting load makes the player hungrier, up to twice TFC's passive hunger at the maximum weight. Default: true")
     .define("enable_food_exhaustion", true);
 
   private static final ModConfigSpec.IntValue CALCULATE_WEIGHT_EACH_N_TICKS = SERVER_BUILDER
