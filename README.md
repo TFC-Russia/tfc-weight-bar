@@ -1,16 +1,20 @@
 # TFC Weight Bar
 
-<img src="docs/avatar.png" alt="" width="120" align="right">
-
 **English** · [Русский](README.ru.md)
 
 ## About
 
+<img src="docs/avatar.png" alt="" width="120" align="right">
+
 This is a simple TFC addon that adds a weight points to all items in player inventory and Curios slots. If weight points exceed some amount player will receive debuff
+
+On CurseForge: [TFC Item Weight](https://www.curseforge.com/minecraft/mc-mods/tfc-item-weight).
 
 ![The weight bar above the TFC food and thirst bars, at 720 of 1000](docs/weight-bar.png)
 
 The bar sits above the TFC food and thirst bars and shows the weight you carry out of your capacity. It turns pink once you are Exhausted and red once you are Overburdened.
+
+<br clear="right">
 
 ## Requirements
 
