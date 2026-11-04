@@ -22,6 +22,8 @@ The project's other fields, which are also web-only:
   Source   https://github.com/TFC-Russia/tfc-weight-bar
   Issues   https://github.com/TFC-Russia/tfc-weight-bar/issues
   Avatar   docs/avatar.png in this repository (512x512; CurseForge asks for 400x400)
+  Images   docs/weight-bar.png, linked below from GitHub, since the page cannot
+           point to a path in the repository
   Page     https://www.curseforge.com/minecraft/mc-mods/tfc-item-weight, project id 1776579
 -->
 
@@ -30,6 +32,8 @@ The project's other fields, which are also web-only:
 An addon for TerraFirmaCraft that gives your inventory a carrying capacity. Every item you carry has
 a weight, a bar above the TFC food bar shows how loaded you are, and carrying too much brings TFC's
 own debuffs.
+
+![The weight bar above the TFC food and thirst bars, at 720 of 1000](https://raw.githubusercontent.com/TFC-Russia/tfc-weight-bar/1.21.x/docs/weight-bar.png)
 
 ## Features
 
