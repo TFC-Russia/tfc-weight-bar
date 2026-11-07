@@ -21,6 +21,38 @@ public class Config {
   }
 
   /**
+   * How the player sees their weight.
+   */
+  public enum WeightDisplay implements TranslatableEnum {
+    /** The bar on the HUD */
+    HUD,
+    /** A message above the hotbar every 10 seconds */
+    TEXT,
+    /** Neither: the weight only shows in item tooltips */
+    OFF;
+
+    @Override
+    public Component getTranslatedName() {
+      return Component.translatable(Constants.MOD_ID + ".configuration.weight_display." + name().toLowerCase(Locale.ROOT));
+    }
+  }
+
+  /**
+   * A server's say over weight_display: leave it to each player, or show every player the weight one way.
+   */
+  public enum ForceWeightDisplay implements TranslatableEnum {
+    CLIENT,
+    HUD,
+    TEXT,
+    OFF;
+
+    @Override
+    public Component getTranslatedName() {
+      return Component.translatable(Constants.MOD_ID + ".configuration.force_weight_display." + name().toLowerCase(Locale.ROOT));
+    }
+  }
+
+  /**
    * Where the HUD bar sits.
    */
   public enum BarPosition implements TranslatableEnum {
@@ -66,9 +98,11 @@ public class Config {
   // Client Config: Mods > TFC Weight Bar > Config edits it in game, and edits apply at once
   private static final ModConfigSpec.Builder CLIENT_BUILDER = new ModConfigSpec.Builder();
 
-  private static final ModConfigSpec.BooleanValue ENABLE_UI_BAR = CLIENT_BUILDER
-    .comment("Show the weight as a bar on the HUD. When off, the weight shows above the hotbar every 10 seconds instead. A server can decide this for everyone with force_ui_bar. Default: true")
-    .define("enable_ui_bar", true);
+  // Replaces enable_ui_bar of 1.0.x. Its value is not carried over: the config loader drops the key, and every player
+  // starts on the HUD bar, false or not, since the message above the hotbar was only a stopgap before the bar
+  private static final ModConfigSpec.EnumValue<WeightDisplay> WEIGHT_DISPLAY = CLIENT_BUILDER
+    .comment("How you see your weight: HUD as a bar on the HUD, TEXT as a message above the hotbar every 10 seconds, OFF not at all, apart from item tooltips. A server can decide this for everyone with force_weight_display. Default: HUD")
+    .defineEnum("weight_display", WeightDisplay.HUD);
 
   private static final ModConfigSpec.EnumValue<BarPosition> BAR_POSITION = CLIENT_BUILDER
     .comment("Where the HUD bar sits: FOOD above the TFC food and thirst bars, HEALTH above the health bar, and above the armour bar while that shows. A server can decide this for everyone with force_bar_position. Default: FOOD")
@@ -142,9 +176,9 @@ public class Config {
     .defineListAllowEmpty("curios_slots", List.of(), () -> "back", obj -> obj instanceof String);
 
   // The server sends its config to every client that joins, so these settle the HUD for all players on it
-  private static final ModConfigSpec.EnumValue<ForceToggle> FORCE_UI_BAR = SERVER_BUILDER
-    .comment("Decides enable_ui_bar for every player: CLIENT leaves it to each player's client config, ON shows every player the HUD bar, OFF shows every player the weight above the hotbar instead. Default: CLIENT")
-    .defineEnum("force_ui_bar", ForceToggle.CLIENT);
+  private static final ModConfigSpec.EnumValue<ForceWeightDisplay> FORCE_WEIGHT_DISPLAY = SERVER_BUILDER
+    .comment("Decides weight_display for every player: CLIENT leaves it to each player's client config, HUD, TEXT or OFF shows every player the weight that way. Default: CLIENT")
+    .defineEnum("force_weight_display", ForceWeightDisplay.CLIENT);
 
   private static final ModConfigSpec.EnumValue<ForceBarPosition> FORCE_BAR_POSITION = SERVER_BUILDER
     .comment("Decides bar_position for every player: CLIENT leaves it to each player's client config, FOOD or HEALTH puts every player's bar there. Default: CLIENT")
@@ -157,12 +191,12 @@ public class Config {
   static final ModConfigSpec SERVER_SPEC = SERVER_BUILDER.build();
 
   // Client config variables
-  public static boolean enableUIBar;
+  public static WeightDisplay weightDisplay = WeightDisplay.HUD;
   public static BarPosition barPosition = BarPosition.FOOD;
   public static boolean showBarNumbers = true;
 
   // Server config variables
-  public static ForceToggle forceUIBar = ForceToggle.CLIENT;
+  public static ForceWeightDisplay forceWeightDisplay = ForceWeightDisplay.CLIENT;
   public static ForceBarPosition forceBarPosition = ForceBarPosition.CLIENT;
   public static ForceToggle forceBarNumbers = ForceToggle.CLIENT;
   public static List<String> curios_slots = List.of();
@@ -190,7 +224,7 @@ public class Config {
 
     if (event.getConfig().getSpec() == CLIENT_SPEC) {
       // Client config
-      enableUIBar = ENABLE_UI_BAR.get();
+      weightDisplay = WEIGHT_DISPLAY.get();
       barPosition = BAR_POSITION.get();
       showBarNumbers = SHOW_BAR_NUMBERS.get();
     } else if (event.getConfig().getSpec() == SERVER_SPEC) {
@@ -213,7 +247,7 @@ public class Config {
       // Slot ids rather than Curios slot types, so that loading the config does not need Curios
       curios_slots = List.copyOf(SLOT_NAME_STRINGS.get());
 
-      forceUIBar = FORCE_UI_BAR.get();
+      forceWeightDisplay = FORCE_WEIGHT_DISPLAY.get();
       forceBarPosition = FORCE_BAR_POSITION.get();
       forceBarNumbers = FORCE_BAR_NUMBERS.get();
     }
@@ -227,14 +261,14 @@ public class Config {
   }
 
   /**
-   * Whether the weight shows as the HUD bar rather than above the hotbar: the server's force_ui_bar, else the player's
-   * enable_ui_bar.
+   * How the player sees their weight: the server's force_weight_display, else the player's weight_display.
    */
-  public static boolean isUIBarShown() {
-    return switch (forceUIBar) {
-      case CLIENT -> enableUIBar;
-      case ON -> true;
-      case OFF -> false;
+  public static WeightDisplay getWeightDisplay() {
+    return switch (forceWeightDisplay) {
+      case CLIENT -> weightDisplay;
+      case HUD -> WeightDisplay.HUD;
+      case TEXT -> WeightDisplay.TEXT;
+      case OFF -> WeightDisplay.OFF;
     };
   }
 

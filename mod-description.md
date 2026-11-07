@@ -44,7 +44,7 @@ debuffs.
 - **Curios slots count.** With the Curios API installed, items worn in Curios slots add to the
   weight. The server config can limit that to chosen slots, such as the back slot.
 - **HUD bar.** A weight bar above the TFC food bar, or above the health bar, changes colour as you
-  near your limit. It can hide its numbers, or give way to a message above the hotbar.
+  near your limit. It can hide its numbers, give way to a message above the hotbar, or be turned off.
 - **Tooltips.** Item tooltips show the item's weight, and say so when an item is too heavy to carry.
 - **Debuffs.** Past 80% of your capacity you are Exhausted, and above your capacity you are
   Overburdened, both with TFC's own effects. TFC's rule for huge and very heavy items still applies,
@@ -78,11 +78,12 @@ A port of MC+ Cart by andykuo1, and it knows TerraFirmaCraft's item sizes.
 threshold, the points per weight class, the health rule, the Curios slot types that count
 (`curios_slots`, every slot by default), and switches for the debuffs, the food exhaustion and the
 whole system. It can also settle the HUD options below for every player on the server
-(`force_ui_bar`, `force_bar_position`, `force_bar_numbers`); by default each player picks their own.
+(`force_weight_display`, `force_bar_position`, `force_bar_numbers`); by default each player picks
+their own.
 
 **Client config**, `config/tfc_weight_bar-client.toml`, also in game under Mods > TFC Weight Bar >
-Config: whether the HUD bar is drawn or the weight shows above the hotbar instead, whether the bar
-sits above the food bar or the health bar, and whether it shows numbers. Changes apply at once,
+Config: whether the weight shows as the HUD bar, as a message above the hotbar or not at all,
+whether the bar sits above the food bar or the health bar, and whether it shows numbers. Changes apply at once,
 without a restart.
 
 **Datapacks**: add an item to one of the tags `tfc_weight_bar:weight/very_light`, `light`, `medium`,
