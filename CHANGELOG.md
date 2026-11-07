@@ -4,6 +4,11 @@
 
 Newest version first. The entry of a version is also its GitHub release notes and its changelog on CurseForge.
 
+## 1.1.0
+- The HUD bar can sit above the health bar instead of the food bar, and its numbers can be hidden: `bar_position` and `show_bar_numbers` in the client config.
+- Mods > TFC Weight Bar > Config edits the client options in game, and the HUD follows at once, without a restart. The server options stay in the server config file.
+- A server can settle the HUD options for every player: `force_ui_bar`, `force_bar_position` and `force_bar_numbers` in the server config. CLIENT, the default, leaves each one to the player, and the config screen shows an option the server settles as locked.
+
 ## 1.0.3
 - On a dedicated server the weight message above the hotbar no longer shows up every 10 seconds beside the HUD bar: the server ran the client's message code, without the client config that turns the message off.
 

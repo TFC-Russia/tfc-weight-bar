@@ -30,8 +30,8 @@ The project's other fields, which are also web-only:
 # TFC Item Weight
 
 An addon for TerraFirmaCraft that gives your inventory a carrying capacity. Every item you carry has
-a weight, a bar above the TFC food bar shows how loaded you are, and carrying too much brings TFC's
-own debuffs.
+a weight, a bar on the HUD shows how loaded you are, and carrying too much brings TFC's own
+debuffs.
 
 ![The weight bar above the TFC food and thirst bars, at 720 of 1000](https://raw.githubusercontent.com/TFC-Russia/tfc-weight-bar/1.21.x/docs/weight-bar.png)
 
@@ -43,8 +43,8 @@ own debuffs.
   barrels carried as items add the weight of what is inside them.
 - **Curios slots count.** With the Curios API installed, items worn in Curios slots add to the
   weight. The server config can limit that to chosen slots, such as the back slot.
-- **HUD bar.** A weight bar above the TFC food bar changes colour as you near your limit. It can show
-  as an action bar message instead.
+- **HUD bar.** A weight bar above the TFC food bar, or above the health bar, changes colour as you
+  near your limit. It can hide its numbers, or give way to a message above the hotbar.
 - **Tooltips.** Item tooltips show the item's weight, and say so when an item is too heavy to carry.
 - **Debuffs.** Past 80% of your capacity you are Exhausted, and above your capacity you are
   Overburdened, both with TFC's own effects. TFC's rule for huge and very heavy items still applies,
@@ -73,13 +73,17 @@ A port of MC+ Cart by andykuo1, and it knows TerraFirmaCraft's item sizes.
 
 ## Customization
 
-**Server config**, `serverconfig/tfc_weight_bar-server.toml` in the world folder: the maximum weight
-(1000 by default), the Exhausted threshold, the points per weight class, the health rule, the Curios
-slot types that count (`curios_slots`, every slot by default), and switches for the debuffs, the food
-exhaustion and the whole system.
+**Server config**, `serverconfig/tfc_weight_bar-server.toml` in the world folder on 1.20.1 and
+`config/tfc_weight_bar-server.toml` on 1.21.1: the maximum weight (1000 by default), the Exhausted
+threshold, the points per weight class, the health rule, the Curios slot types that count
+(`curios_slots`, every slot by default), and switches for the debuffs, the food exhaustion and the
+whole system. It can also settle the HUD options below for every player on the server
+(`force_ui_bar`, `force_bar_position`, `force_bar_numbers`); by default each player picks their own.
 
-**Client config**, `config/tfc_weight_bar-client.toml`: whether the HUD bar is drawn, or the weight is
-shown above the hotbar instead.
+**Client config**, `config/tfc_weight_bar-client.toml`, also in game under Mods > TFC Weight Bar >
+Config: whether the HUD bar is drawn or the weight shows above the hotbar instead, whether the bar
+sits above the food bar or the health bar, and whether it shows numbers. Changes apply at once,
+without a restart.
 
 **Datapacks**: add an item to one of the tags `tfc_weight_bar:weight/very_light`, `light`, `medium`,
 `heavy` or `very_heavy` to give it that weight in the bar without changing its TFC size or stack
