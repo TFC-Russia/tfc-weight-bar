@@ -70,7 +70,7 @@ public class WeightBarOverlay {
     final Minecraft minecraft = Minecraft.getInstance();
     final WeightSyncPacket data = WeightBarClientData.get();
 
-    if (Config.enableWeightCalculations == false || Config.enableUIBar == false || data == null) {
+    if (Config.enableWeightCalculations == false || !Config.isUIBarShown() || data == null) {
       return;
     }
 
@@ -82,9 +82,13 @@ public class WeightBarOverlay {
 
     final Gui gui = minecraft.gui;
 
+    // The layer comes after the health, armour and food layers, so each side's running height already counts its
+    // bars: the health side stacks up from the left half of the hotbar, the food side from the right half
+    final boolean onHealth = Config.getBarPosition() == Config.BarPosition.HEALTH;
+
     // bottom aligned with the row the bars below ended on, 1px gap to the bar below
-    final int x = graphics.guiWidth() / 2 + 1;
-    final int y = graphics.guiHeight() - gui.rightHeight - 1;
+    final int x = onHealth ? graphics.guiWidth() / 2 - 91 : graphics.guiWidth() / 2 + 1;
+    final int y = graphics.guiHeight() - (onHealth ? gui.leftHeight : gui.rightHeight) - 1;
 
     final double barPercentage = data.maxWeight() <= 0 ? 0
         : Mth.clamp((double) data.weight() / (double) data.maxWeight(), 0, 1);
@@ -93,10 +97,16 @@ public class WeightBarOverlay {
     graphics.blit(TEXTURE, x, y, 0, 0, BAR_WIDTH, BAR_HEIGHT, TEXTURE_WIDTH, TEXTURE_HEIGHT);
     graphics.blit(TEXTURE, x, y, 0, FILL_V, fillWidth, BAR_HEIGHT, TEXTURE_WIDTH, TEXTURE_HEIGHT);
 
-    drawWeightText(graphics, minecraft.font, data, x, y);
+    if (Config.areBarNumbersShown()) {
+      drawWeightText(graphics, minecraft.font, data, x, y);
+    }
 
     // leave the next bar room above this one
-    gui.rightHeight += BAR_HEIGHT + 1;
+    if (onHealth) {
+      gui.leftHeight += BAR_HEIGHT + 1;
+    } else {
+      gui.rightHeight += BAR_HEIGHT + 1;
+    }
   }
 
   private static void drawWeightText(GuiGraphics graphics, Font font, WeightSyncPacket data, int x, int y) {
