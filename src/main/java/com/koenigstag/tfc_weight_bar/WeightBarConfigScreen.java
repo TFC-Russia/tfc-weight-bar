@@ -39,10 +39,13 @@ public class WeightBarConfigScreen extends Screen {
     final int x = width / 2 - 100;
     int y = height / 4;
 
-    addOption(CycleButton.onOffBuilder(Config.isUIBarShown())
-        .create(x, y, 200, 20, Component.translatable(KEY + "enable_ui_bar"),
-            (button, value) -> Config.setEnableUIBar(value)),
-        "enable_ui_bar", Config.forceUIBar != Config.ForceToggle.CLIENT);
+    addOption(CycleButton.<Config.WeightDisplay>builder(
+            display -> Component.translatable(KEY + "weight_display." + display.name().toLowerCase(Locale.ROOT)))
+        .withValues(Config.WeightDisplay.values())
+        .withInitialValue(Config.getWeightDisplay())
+        .create(x, y, 200, 20, Component.translatable(KEY + "weight_display"),
+            (button, value) -> Config.setWeightDisplay(value)),
+        "weight_display", Config.forceWeightDisplay != Config.ForceWeightDisplay.CLIENT);
     y += 24;
 
     addOption(CycleButton.<Config.BarPosition>builder(

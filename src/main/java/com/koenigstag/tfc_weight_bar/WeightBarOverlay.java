@@ -50,7 +50,7 @@ public class WeightBarOverlay {
     final Minecraft minecraft = Minecraft.getInstance();
     final WeightSyncPacket data = WeightBarClientData.get();
 
-    if (Config.enableWeightCalculations == false || !Config.isUIBarShown() || data == null) {
+    if (Config.enableWeightCalculations == false || Config.getWeightDisplay() != Config.WeightDisplay.HUD || data == null) {
       return;
     }
 

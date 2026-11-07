@@ -71,7 +71,7 @@ public class ForgeClientEventHandler {
   private static void displayCurrentWeightClientMessage(Player player, Level level, int playerInvWeight,
       int maxInvWeight,
       int hugeHeavyCount, double barPercentage, String barColor) {
-    if (!Config.isUIBarShown() && level.getGameTime() % showMessageEachTicks == 0) {
+    if (Config.getWeightDisplay() == Config.WeightDisplay.TEXT && level.getGameTime() % showMessageEachTicks == 0) {
       Component message = createWeightMessage(playerInvWeight, maxInvWeight, barPercentage, hugeHeavyCount);
 
       MutableComponent msgComponent = message.copy();
