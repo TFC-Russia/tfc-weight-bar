@@ -71,6 +71,13 @@ repositories {
         }
     }
 
+    maven {
+        url "https://api.modrinth.com/maven"
+        content {
+            includeGroup "maven.modrinth"
+        }
+    }
+
     flatDir {
         dir 'libs'
     }
@@ -90,6 +97,10 @@ dependencies {
 
     // TFC requires Patchouli, needed only to launch the game in dev
     runtimeOnly fg.deobf("curse.maven:patchouli-306770:$patchouliFileID")
+
+    // TFC Astikor Carts, optional, for the cart load bar; in dev it runs too, to try the bar out
+    implementation fg.deobf("maven.modrinth:tfc-astikor-carts:$tfc_astikor_carts_version")
+    implementation fg.deobf("maven.modrinth:astikorcarts-redux:$astikorcarts_version")
 }
 
 tasks.named('processResources', ProcessResources).configure {

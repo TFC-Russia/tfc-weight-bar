@@ -68,7 +68,8 @@ public class WeightBarData {
     // send current state to the client HUD bar
     if (player instanceof ServerPlayer serverPlayer) {
       WeightBarNetwork.sendToPlayer(serverPlayer,
-          new WeightSyncPacket(playerInvWeight, maxInvWeight, isExhausted, isOverburdened));
+          new WeightSyncPacket(playerInvWeight, maxInvWeight, isExhausted, isOverburdened,
+              WeightBarHelpers.getCartLoad(player)));
     }
 
     Constants.debug("Nickname: " + player.getName() + "; Current Weight: " + playerInvWeight + "; Max Weight: "

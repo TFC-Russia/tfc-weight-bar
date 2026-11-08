@@ -8,7 +8,9 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class WeightBarNetwork {
-  private static final String PROTOCOL_VERSION = "1";
+  // 2: the weight packet carries the cart load too, so a 1.0.x client and a 1.1.0 server refuse each other, and the
+  // other way round, rather than misread it
+  private static final String PROTOCOL_VERSION = "2";
 
   private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
       new ResourceLocation(Constants.MOD_ID, "main"),

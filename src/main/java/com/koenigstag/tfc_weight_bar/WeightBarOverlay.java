@@ -17,7 +17,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 
-// HUD weight bar, the thick bar from the TFCSU (TFC Russia) 1.7.10 HUD
+// HUD weight bar, the thick bar from the TFCSU (TFC Russia) 1.7.10 HUD, and above it the cart bar while a cart burdens
+// the player
 @Mod.EventBusSubscriber(modid = Constants.MOD_ID, bus = Bus.MOD, value = Dist.CLIENT)
 public class WeightBarOverlay {
   // texture rows (each 90x10): background, fill
@@ -28,6 +29,14 @@ public class WeightBarOverlay {
   private static final int BAR_WIDTH = 90;
   private static final int BAR_HEIGHT = 10;
   private static final int FILL_V = 10;
+
+  // The fill texture turns pink from this pixel on, its last section before the end
+  private static final double FILL_LAST_SECTION = 75.0 / BAR_WIDTH;
+
+  // The cart bar's fill is tinted wood brown, to tell it from the grey weight bar below it
+  private static final float CART_TINT_RED = 0.85f;
+  private static final float CART_TINT_GREEN = 0.62f;
+  private static final float CART_TINT_BLUE = 0.38f;
 
   private static final int NORMAL_TEXT_COLOR = 0xFFFFFF;
   private static final int EXHAUSTED_TEXT_COLOR = 0xFFFF00;
@@ -64,20 +73,40 @@ public class WeightBarOverlay {
     // The overlay comes after the health, armour and food overlays, so each side's running height already counts its
     // bars: the health side stacks up from the left half of the hotbar, the food side from the right half
     final boolean onHealth = Config.getBarPosition() == Config.BarPosition.HEALTH;
-
-    // bottom aligned with the 9px row like TFC 5px bars, 1px gap to the bar below
     final int x = onHealth ? width / 2 - 91 : width / 2 + 1;
-    final int y = height - (onHealth ? gui.leftHeight : gui.rightHeight) - 1;
 
-    final double barPercentage = data.maxWeight() <= 0 ? 0
-        : Mth.clamp((double) data.weight() / (double) data.maxWeight(), 0, 1);
-    final int fillWidth = (int) (BAR_WIDTH * barPercentage);
+    final double weightFill = data.maxWeight() <= 0 ? 0 : (double) data.weight() / (double) data.maxWeight();
+    drawBar(gui, graphics, minecraft.font, x, height, onHealth, weightFill, false,
+        data.weight() + "/" + data.maxWeight(), getTextColor(data.exhausted(), data.overburdened()));
+
+    final CartLoad cart = data.cart();
+    if (cart != null) {
+      drawBar(gui, graphics, minecraft.font, x, height, onHealth, getCartFill(cart), true,
+          Math.round(cart.load()) + "/" + Math.round(cart.overburdenedLoad()),
+          getTextColor(cart.isExhausted(), cart.isOverburdened()));
+    }
+  }
+
+  /**
+   * Draws a bar on top of the bars already on that side, and counts it in that side's height for the next one.
+   */
+  private static void drawBar(ForgeGui gui, GuiGraphics graphics, Font font, int x, int height, boolean onHealth,
+      double fill, boolean cartTint, String text, int textColor) {
+    // bottom aligned with the 9px row like TFC 5px bars, 1px gap to the bar below
+    final int y = height - (onHealth ? gui.leftHeight : gui.rightHeight) - 1;
+    final int fillWidth = (int) (BAR_WIDTH * Mth.clamp(fill, 0, 1));
 
     graphics.blit(TEXTURE, x, y, 0, 0, BAR_WIDTH, BAR_HEIGHT, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+    if (cartTint) {
+      graphics.setColor(CART_TINT_RED, CART_TINT_GREEN, CART_TINT_BLUE, 1f);
+    }
     graphics.blit(TEXTURE, x, y, 0, FILL_V, fillWidth, BAR_HEIGHT, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+    if (cartTint) {
+      graphics.setColor(1f, 1f, 1f, 1f);
+    }
 
     if (Config.areBarNumbersShown()) {
-      drawWeightText(graphics, minecraft.font, data, x, y);
+      drawBarText(graphics, font, text, textColor, x, y);
     }
 
     if (onHealth) {
@@ -87,17 +116,33 @@ public class WeightBarOverlay {
     }
   }
 
-  private static void drawWeightText(GuiGraphics graphics, Font font, WeightSyncPacket data, int x, int y) {
-    final String text = data.weight() + "/" + data.maxWeight();
-
-    int color = NORMAL_TEXT_COLOR;
-
-    if (data.overburdened()) {
-      color = OVERBURDENED_TEXT_COLOR;
-    } else if (data.exhausted()) {
-      color = EXHAUSTED_TEXT_COLOR;
+  /**
+   * How full the cart bar is. TFC Astikor Carts makes the player Exhausted past one load and Overburdened past another,
+   * at a ratio of its own, so the bar puts the first where its pink last section starts and the second at its end:
+   * pink means Exhausted and full means Overburdened, as on the weight bar.
+   */
+  static double getCartFill(final CartLoad cart) {
+    if (cart.overburdenedLoad() <= 0) {
+      return 1;
     }
+    if (cart.exhaustedLoad() <= 0 || cart.exhaustedLoad() >= cart.overburdenedLoad()) {
+      return cart.load() / cart.overburdenedLoad();
+    }
+    if (cart.load() <= cart.exhaustedLoad()) {
+      return FILL_LAST_SECTION * cart.load() / cart.exhaustedLoad();
+    }
+    return FILL_LAST_SECTION + (1 - FILL_LAST_SECTION)
+        * (cart.load() - cart.exhaustedLoad()) / (cart.overburdenedLoad() - cart.exhaustedLoad());
+  }
 
+  private static int getTextColor(boolean exhausted, boolean overburdened) {
+    if (overburdened) {
+      return OVERBURDENED_TEXT_COLOR;
+    }
+    return exhausted ? EXHAUSTED_TEXT_COLOR : NORMAL_TEXT_COLOR;
+  }
+
+  private static void drawBarText(GuiGraphics graphics, Font font, String text, int color, int x, int y) {
     // same text size and placement as the TFC health bar
     final PoseStack pose = graphics.pose();
     pose.pushPose();

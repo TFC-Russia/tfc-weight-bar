@@ -45,6 +45,9 @@ debuffs.
   weight. The server config can limit that to chosen slots, such as the back slot.
 - **HUD bar.** A weight bar above the TFC food bar, or above the health bar, changes colour as you
   near your limit. It can hide its numbers, give way to a message above the hotbar, or be turned off.
+- **Cart bar.** With TFC Astikor Carts, a brown bar above the weight bar shows how loaded the cart you
+  pull is, and how close that mod is to making you Exhausted or Overburdened. The cart's load does not
+  add to your weight.
 - **Tooltips.** Item tooltips show the item's weight, and say so when an item is too heavy to carry.
 - **Debuffs.** Past 80% of your capacity you are Exhausted, and above your capacity you are
   Overburdened, both with TFC's own effects. TFC's rule for huge and very heavy items still applies,
@@ -99,7 +102,9 @@ size. Ore pieces and minerals are tagged this way out of the box.
 
 Only TerraFirmaCraft is required. With the Curios API, items in Curios slots add to the weight; with
 [**TFC Curios Weight**](https://www.curseforge.com/minecraft/mc-mods/tfc-curios-weight), TFC's rule
-for huge and very heavy items also covers Curios slots.
+for huge and very heavy items also covers Curios slots; with
+[**TFC Astikor Carts**](https://modrinth.com/mod/tfc-astikor-carts), the cart bar shows the load of the
+cart you pull.
 
 ## License
 
