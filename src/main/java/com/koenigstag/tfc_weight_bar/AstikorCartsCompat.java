@@ -5,26 +5,31 @@ import java.lang.reflect.Method;
 import de.mennomax.astikorcarts.entity.AbstractDrawnEntity;
 import de.mennomax.astikorcarts.world.AstikorWorld;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
+import tfcastikorcarts.common.container.SupplyCartContainer;
 import tfcastikorcarts.common.entities.carts.TFCAnimalCartEntity;
 import tfcastikorcarts.common.entities.carts.TFCSupplyCartEntity;
 import tfcastikorcarts.config.TFCAstikorCartsConfig;
 
 /**
- * Everything that touches TFC Astikor Carts. It is optional, so call this only through
- * {@link WeightBarHelpers#getCartLoad(Player)}: loading this class without it fails.
+ * Everything that touches TFC Astikor Carts. It is optional, so call this only through {@link WeightBarHelpers}: loading
+ * this class without it fails.
  *
  * <p>Two ways of weighing a cart are around. Since 1.1.9 the cart weighs its cargo as a mass, every item of a stack
- * counted, compares a hundredth of it with the thresholds in its config, and burdens only a player who pulls it on
- * foot. Up to 1.1.8 a slot weighed the same whether it held one item or a full stack, and the rider of an animal that
- * pulls the cart was burdened too. This is built against 1.1.9 and reaches the old counting method by name, since
- * 1.1.9 removed it.
+ * counted, and compares a hundredth of it with the thresholds in its config. Up to 1.1.8 a slot weighed the same whether
+ * it held one item or a full stack. This is built against 1.1.9 and reaches the old counting method by name, since 1.1.9
+ * removed it.
  */
 public final class AstikorCartsCompat {
   // Up to 1.1.8 the animal cart weighs its passengers against these, written into its code rather than its config
   private static final float LEGACY_ANIMAL_CART_EXHAUSTED_LOAD = 10;
   private static final float LEGACY_ANIMAL_CART_OVERBURDENED_LOAD = 20;
+
+  // A pulled cart stays within a few blocks of whoever pulls it
+  private static final double CART_SEARCH_RADIUS = 8;
+
 
   // The supply cart's counting method up to 1.1.8, or null on 1.1.9 and later
   @Nullable
@@ -47,22 +52,60 @@ public final class AstikorCartsCompat {
   }
 
   /**
-   * The load of the cart that burdens this player, or null when none does.
+   * The load of the cart this player pulls on foot, or that the animal they ride pulls, or null when there is none. A
+   * plough does not count.
    */
   @Nullable
   public static CartLoad getCartLoad(final Player player) {
+    final Entity vehicle = player.getVehicle();
+    final Entity puller = vehicle != null ? vehicle : player;
+
+    return AstikorWorld.get(player.level()).resolve()
+        .flatMap(world -> world.getDrawn(puller))
+        .map(AstikorCartsCompat::getLoad)
+        .orElse(null);
+  }
+
+  /**
+   * Makes each animal near this player let go of a cart loaded past what TFC Astikor Carts lets a player pull. Since
+   * 1.1.9 that mod has no limit of its own for an animal, and up to 1.1.8 it burdens the rider, whom a TFC horse then
+   * kicks off, with the cart still hitched. A player pulling on foot stays with that mod's debuffs.
+   */
+  public static void refuseOverloadedCarts(final Player player) {
+    for (final AbstractDrawnEntity cart : player.level().getEntitiesOfClass(AbstractDrawnEntity.class,
+        player.getBoundingBox().inflate(CART_SEARCH_RADIUS),
+        drawn -> drawn.getPulling() instanceof LivingEntity && !(drawn.getPulling() instanceof Player))) {
+      final CartLoad load = getLoad(cart);
+
+      if (load != null && load.isOverburdened() && !isBeingLoaded(cart)) {
+        refuse(cart, load);
+      }
+    }
+  }
+
+  // The cart's inventory hides most of the message over the hotbar, so an animal with no rider waits until the player
+  // loading the cart closes it, and they read it whole
+  private static boolean isBeingLoaded(final AbstractDrawnEntity cart) {
+    return cart.getPulling().getPassengers().isEmpty()
+        && !cart.level().getEntitiesOfClass(Player.class, cart.getBoundingBox().inflate(CART_SEARCH_RADIUS),
+            near -> near.containerMenu instanceof SupplyCartContainer menu && menu.cart == cart).isEmpty();
+  }
+
+  private static void refuse(final AbstractDrawnEntity cart, final CartLoad load) {
+    final Entity puller = cart.getPulling();
+
+    cart.setPulling(null);
+
+    WeightBarHelpers.announceCartRefused(puller, cart, load);
+  }
+
+  // The same sums the cart weighs against its thresholds, or null for a cart with no load, such as a plough
+  @Nullable
+  private static CartLoad getLoad(final AbstractDrawnEntity cart) {
     final boolean legacy = LEGACY_SUPPLY_CART_LOAD != null;
 
-    // Up to 1.1.8 the rider who steers the animal that pulls the cart is burdened as well
-    final Entity vehicle = player.getVehicle();
-    final Entity puller = legacy && vehicle != null && vehicle.getControllingPassenger() == player ? vehicle : player;
-
-    final AbstractDrawnEntity cart = AstikorWorld.get(player.level()).resolve()
-        .flatMap(world -> world.getDrawn(puller))
-        .orElse(null);
-
     if (cart instanceof TFCSupplyCartEntity supplyCart) {
-      return new CartLoad(legacy ? getLegacyLoad(supplyCart) : getLoad(supplyCart.countOverburdenedCargo()),
+      return new CartLoad(legacy ? getLegacyLoad(supplyCart) : getHundredth(supplyCart.countOverburdenedCargo()),
           getExhaustedLoad(), getOverburdenedLoad());
     }
 
@@ -70,15 +113,14 @@ public final class AstikorCartsCompat {
       return legacy
           ? new CartLoad(animalCart.countOverburdened(), LEGACY_ANIMAL_CART_EXHAUSTED_LOAD,
               LEGACY_ANIMAL_CART_OVERBURDENED_LOAD)
-          : new CartLoad(getLoad(animalCart.countOverburdened()), getExhaustedLoad(), getOverburdenedLoad());
+          : new CartLoad(getHundredth(animalCart.countOverburdened()), getExhaustedLoad(), getOverburdenedLoad());
     }
 
-    // A plough, or a cart of another mod, carries no load
     return null;
   }
 
   // Since 1.1.9 a cart compares a hundredth of what it counts with its thresholds, and never less than 1
-  private static float getLoad(final double count) {
+  private static float getHundredth(final double count) {
     return (float) Math.max(count * 0.01, 1.0);
   }
 

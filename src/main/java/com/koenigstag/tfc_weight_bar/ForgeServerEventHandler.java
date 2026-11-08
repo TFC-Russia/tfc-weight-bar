@@ -1,5 +1,6 @@
 package com.koenigstag.tfc_weight_bar;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
@@ -20,6 +21,16 @@ public final class ForgeServerEventHandler {
     bus.register(ForgeServerEventHandler.class);
 
     Constants.LOGGER.info("Setup server event handler complete");
+  }
+
+  @SubscribeEvent
+  public static void onLevelTick(TickEvent.LevelTickEvent event) {
+    // Before the level ticks its entities: a cart burdens whoever pulls it as it ticks, and up to TFC Astikor Carts 1.1.8
+    // that includes the rider of its animal, whom a TFC horse then kicks off
+    if (event.phase == TickEvent.Phase.START && Config.enableWeightCalculations
+        && Config.enableCartLimits && event.level instanceof ServerLevel level) {
+      WeightBarHelpers.refuseOverloadedCarts(level);
+    }
   }
 
   @SubscribeEvent

@@ -41,6 +41,7 @@ public class WeightBarConfigScreen extends Screen {
     final boolean displayForced = inWorld && Config.forceWeightDisplay != Config.ForceWeightDisplay.CLIENT;
     final boolean positionForced = inWorld && Config.forceBarPosition != Config.ForceBarPosition.CLIENT;
     final boolean numbersForced = inWorld && Config.forceBarNumbers != Config.ForceToggle.CLIENT;
+    final boolean cartBarForced = inWorld && Config.forceCartBar != Config.ForceToggle.CLIENT;
 
     final int x = width / 2 - 100;
     int y = height / 4;
@@ -67,6 +68,12 @@ public class WeightBarConfigScreen extends Screen {
         .create(x, y, 200, 20, Component.translatable(KEY + "show_bar_numbers"),
             (button, value) -> Config.setShowBarNumbers(value)),
         "show_bar_numbers", numbersForced);
+    y += 24;
+
+    addOption(CycleButton.onOffBuilder(cartBarForced ? Config.isCartBarShown() : Config.showCartBar)
+        .create(x, y, 200, 20, Component.translatable(KEY + "show_cart_bar"),
+            (button, value) -> Config.setShowCartBar(value)),
+        "show_cart_bar", cartBarForced);
 
     addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> onClose())
         .bounds(x, height - 28, 200, 20)
