@@ -1,9 +1,11 @@
 package com.koenigstag.tfc_weight_bar;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -19,6 +21,16 @@ public final class ForgeServerEventHandler {
     bus.register(ForgeServerEventHandler.class);
 
     Constants.LOGGER.info("Setup server event handler complete");
+  }
+
+  @SubscribeEvent
+  public static void onLevelTick(LevelTickEvent.Pre event) {
+    // Before the level ticks its entities: the same moment as on 1.20.1, where it keeps a rider from
+    // being burdened by a cart that the animal is about to let go of
+    if (Config.enableWeightCalculations && Config.enableCartLimits
+        && event.getLevel() instanceof ServerLevel level) {
+      WeightBarHelpers.refuseOverloadedCarts(level);
+    }
   }
 
   @SubscribeEvent

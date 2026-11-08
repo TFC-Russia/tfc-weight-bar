@@ -70,9 +70,9 @@ dependencies {
     // TFC requires Patchouli, needed only to launch the game in dev
     runtimeOnly "maven.modrinth:patchouli:${patchouli_version}"
 
-    // TFC Astikor Carts, optional, for the cart load bar. Compiled against only: the TFC Registry API that 1.2.2 and
-    // later require opens every mod as a jar, and fails on this mod's classes folder in dev. To try the bar in dev,
-    // run 1.2.1, the last version without it, which weighs a cart the same way
+    // TFC Astikor Carts, optional, for the cart bar and limit. Compiled against only: the TFC Registry API that 1.2.2
+    // and later require opens every mod as a jar, and fails on this mod's classes folder in dev. To try them in dev,
+    // run this mod from its jar in run/mods, with loadedMods = [] in the client run
     compileOnly "maven.modrinth:tfc-astikor-carts:${tfc_astikor_carts_version}"
     compileOnly "maven.modrinth:astikorcarts-redux:${astikorcarts_version}"
 }

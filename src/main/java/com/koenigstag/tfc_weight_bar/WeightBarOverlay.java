@@ -100,7 +100,7 @@ public class WeightBarOverlay {
     drawBar(gui, graphics, minecraft.font, x, onHealth, weightFill, false,
         data.weight() + "/" + data.maxWeight(), getTextColor(data.exhausted(), data.overburdened()));
 
-    data.cart().ifPresent(cart -> drawBar(gui, graphics, minecraft.font, x, onHealth, getCartFill(cart), true,
+    data.cart().filter(cart -> Config.isCartBarShown()).ifPresent(cart -> drawBar(gui, graphics, minecraft.font, x, onHealth, getCartFill(cart), true,
         Math.round(cart.load()) + "/" + Math.round(cart.overburdenedLoad()),
         getTextColor(cart.isExhausted(), cart.isOverburdened())));
   }

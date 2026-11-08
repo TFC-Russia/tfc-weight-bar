@@ -49,6 +49,8 @@ public final class WeightBarConfigScreen {
       // NeoForge's own boolean button reads ON and OFF the same way
       case "show_bar_numbers" -> Config.forceBarNumbers == Config.ForceToggle.CLIENT
           ? null : CommonComponents.optionStatus(Config.areBarNumbersShown());
+      case "show_cart_bar" -> Config.forceCartBar == Config.ForceToggle.CLIENT
+          ? null : CommonComponents.optionStatus(Config.isCartBarShown());
       default -> null;
     };
     if (forcedValue == null) {

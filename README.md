@@ -22,7 +22,7 @@ The bar sits above the TFC food and thirst bars and shows the weight you carry o
 - TerraFirmaCraft 4.2.0+ (built against 4.2.12)
 - Optional: Curios API 9.5.0+ (built against 9.5.1+1.21.1). With it, items in Curios slots add to the weight.
 - Optional: TFC Curios Weight 1.0.0+, built from its own 1.21.x branch. With it, TFC's rule for huge and very heavy items also covers Curios slots.
-- Optional: TFC Astikor Carts (built against 1.2.4). With it, a second bar shows the load of the cart you pull on foot, against the loads at which that mod makes you Exhausted and Overburdened.
+- Optional: TFC Astikor Carts (built against 1.2.4) or Pull Cart 1.0.4+. With either, a second bar shows the load of the cart you pull, and an animal you ride refuses a cart past its limit. `show_cart_bar` and `enable_cart_limits` turn these off.
 
 ## Changelog
 

@@ -112,6 +112,10 @@ public class Config {
     .comment("Whether the HUD bar shows the weight as numbers, such as 720/1000. A server can decide this for everyone with force_bar_numbers. Default: true")
     .define("show_bar_numbers", true);
 
+  private static final ModConfigSpec.BooleanValue SHOW_CART_BAR = CLIENT_BUILDER
+    .comment("Whether a second bar over the weight bar shows the load of the cart you pull, with TFC Astikor Carts or Pull Cart. A server can decide this for everyone with force_cart_bar. Default: true")
+    .define("show_cart_bar", true);
+
   static final ModConfigSpec CLIENT_SPEC = CLIENT_BUILDER.build();
 
   // Server Config
@@ -175,6 +179,14 @@ public class Config {
     .comment("Curios slot types whose items count towards the weight, such as \"back\" or \"belt\". Empty counts every slot. Default: []")
     .defineListAllowEmpty("curios_slots", List.of(), () -> "back", obj -> obj instanceof String);
 
+  private static final ModConfigSpec.BooleanValue ENABLE_CART_LIMITS = SERVER_BUILDER
+    .comment("Whether carts have a limit: an animal lets go of a cart loaded past it, and tells the players around, and with Pull Cart a player pulling such a cart on foot is burdened. With TFC Astikor Carts the limit is that mod's overburdenedThreshold, and its own debuffs stay either way. Default: true")
+    .define("enable_cart_limits", true);
+
+  private static final ModConfigSpec.IntValue PULL_CART_MAX_LOAD = SERVER_BUILDER
+    .comment("With Pull Cart: the weight a cart's chest can hold before the cart is overloaded, counted as in a player's inventory. It is exhausting from exhausted_weight_percentage of this. Default: 4000")
+    .defineInRange("pull_cart_max_load", 4000, 1, Integer.MAX_VALUE);
+
   // The server sends its config to every client that joins, so these settle the HUD for all players on it
   private static final ModConfigSpec.EnumValue<ForceWeightDisplay> FORCE_WEIGHT_DISPLAY = SERVER_BUILDER
     .comment("Decides weight_display for every player: CLIENT leaves it to each player's client config, HUD, TEXT or OFF shows every player the weight that way. Default: CLIENT")
@@ -188,17 +200,23 @@ public class Config {
     .comment("Decides show_bar_numbers for every player: CLIENT leaves it to each player's client config, ON or OFF shows or hides the numbers on every player's bar. Default: CLIENT")
     .defineEnum("force_bar_numbers", ForceToggle.CLIENT);
 
+  private static final ModConfigSpec.EnumValue<ForceToggle> FORCE_CART_BAR = SERVER_BUILDER
+    .comment("Decides show_cart_bar for every player: CLIENT leaves it to each player's client config, ON or OFF shows or hides every player's cart bar. Default: CLIENT")
+    .defineEnum("force_cart_bar", ForceToggle.CLIENT);
+
   static final ModConfigSpec SERVER_SPEC = SERVER_BUILDER.build();
 
   // Client config variables
   public static WeightDisplay weightDisplay = WeightDisplay.HUD;
   public static BarPosition barPosition = BarPosition.FOOD;
   public static boolean showBarNumbers = true;
+  public static boolean showCartBar = true;
 
   // Server config variables
   public static ForceWeightDisplay forceWeightDisplay = ForceWeightDisplay.CLIENT;
   public static ForceBarPosition forceBarPosition = ForceBarPosition.CLIENT;
   public static ForceToggle forceBarNumbers = ForceToggle.CLIENT;
+  public static ForceToggle forceCartBar = ForceToggle.CLIENT;
   public static List<String> curios_slots = List.of();
   public static boolean enableWeightCalculations;
   public static int maxInvWeight;
@@ -206,6 +224,8 @@ public class Config {
   public static int calculateWeightEachNTicks;
   public static boolean enableWeightDebuffs;
   public static boolean enableFoodExhaustion;
+  public static boolean enableCartLimits;
+  public static int pullCartMaxLoad;
   public static boolean healthAffectsWeightCapacity;
   public static double minHealthWeightPercentage;
 
@@ -227,6 +247,7 @@ public class Config {
       weightDisplay = WEIGHT_DISPLAY.get();
       barPosition = BAR_POSITION.get();
       showBarNumbers = SHOW_BAR_NUMBERS.get();
+      showCartBar = SHOW_CART_BAR.get();
     } else if (event.getConfig().getSpec() == SERVER_SPEC) {
       // Server config
       enableWeightCalculations = ENABLE_WEIGHT_SYSTEM.get();
@@ -237,6 +258,8 @@ public class Config {
       calculateWeightEachNTicks = CALCULATE_WEIGHT_EACH_N_TICKS.get();
       enableWeightDebuffs = ENABLE_WEIGHT_DEBUFFS.get();
       enableFoodExhaustion = ENABLE_FOOD_EXHAUSTION.get();
+      enableCartLimits = ENABLE_CART_LIMITS.get();
+      pullCartMaxLoad = PULL_CART_MAX_LOAD.get();
 
       veryLightWeightInt = VERY_LIGHT_WEIGHT.get();
       lightWeightInt = LIGHT_WEIGHT.get();
@@ -250,6 +273,7 @@ public class Config {
       forceWeightDisplay = FORCE_WEIGHT_DISPLAY.get();
       forceBarPosition = FORCE_BAR_POSITION.get();
       forceBarNumbers = FORCE_BAR_NUMBERS.get();
+      forceCartBar = FORCE_CART_BAR.get();
     }
   }
 
@@ -289,6 +313,17 @@ public class Config {
   public static boolean areBarNumbersShown() {
     return switch (forceBarNumbers) {
       case CLIENT -> showBarNumbers;
+      case ON -> true;
+      case OFF -> false;
+    };
+  }
+
+  /**
+   * Whether the cart bar shows: the server's force_cart_bar, else the player's show_cart_bar.
+   */
+  public static boolean isCartBarShown() {
+    return switch (forceCartBar) {
+      case CLIENT -> showCartBar;
       case ON -> true;
       case OFF -> false;
     };

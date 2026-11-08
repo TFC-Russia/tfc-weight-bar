@@ -5,7 +5,14 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Container;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -35,28 +42,124 @@ public class WeightBarHelpers {
     return ModList.get().isLoaded("tfc_curios_weight");
   }
 
-  // Set once a TFC Astikor Carts version turns out not to match the one this mod was built against
-  private static boolean cartCompatBroken = false;
+  // Each set once a version of that mod turns out not to match what this mod reads from it, which should cost the cart
+  // features, not the server
+  private static boolean astikorCartsBroken = false;
+  private static boolean pullCartBroken = false;
+
+  private static boolean isAstikorCartsUsable() {
+    return !astikorCartsBroken && ModList.get().isLoaded("tfcastikorcarts");
+  }
+
+  private static boolean isPullCartUsable() {
+    return !pullCartBroken && ModList.get().isLoaded("pull_cart");
+  }
+
+  private static void turnAstikorCartsOff(final Throwable cause) {
+    astikorCartsBroken = true;
+    Constants.LOGGER.error("Cannot read the cart load from TFC Astikor Carts, so its cart bar and limit stay off", cause);
+  }
+
+  private static void turnPullCartOff(final Throwable cause) {
+    pullCartBroken = true;
+    Constants.LOGGER.error("Cannot read the cart load from Pull Cart, so its cart bar and limit stay off", cause);
+  }
 
   /**
-   * The load of the cart that burdens the player, or null when there is none or TFC Astikor Carts is not installed.
-   * Its classes are only reached through AstikorCartsCompat, behind this check.
+   * The load of the cart the player pulls, or the animal they ride pulls, or null when there is none. Each mod allows one
+   * cart per player only among its own, so a player can pull one of each, and then this is the one closer to its limit.
+   * Pull Cart has no load of its own, so with enable_cart_limits off it has none here either. The carts' classes are only
+   * reached through AstikorCartsCompat and PullCartCompat, behind these checks.
    */
   @Nullable
   public static CartLoad getCartLoad(final Player player) {
-    if (cartCompatBroken || !ModList.get().isLoaded("tfcastikorcarts")) {
-      return null;
+    CartLoad astikorLoad = null;
+    CartLoad pullCartLoad = null;
+
+    if (isAstikorCartsUsable()) {
+      try {
+        astikorLoad = AstikorCartsCompat.getCartLoad(player);
+      } catch (LinkageError | RuntimeException e) {
+        turnAstikorCartsOff(e);
+      }
     }
 
-    try {
-      return AstikorCartsCompat.getCartLoad(player);
-    } catch (LinkageError | RuntimeException e) {
-      // A later version that renamed what this reads should cost the cart bar, not the server
-      cartCompatBroken = true;
-      Constants.LOGGER.error("Cannot read the cart load from TFC Astikor Carts, so the cart bar stays off", e);
-      return null;
+    if (Config.enableCartLimits && isPullCartUsable()) {
+      try {
+        pullCartLoad = PullCartCompat.getCartLoad(player);
+      } catch (LinkageError | RuntimeException e) {
+        turnPullCartOff(e);
+      }
+    }
+
+    if (astikorLoad == null || pullCartLoad == null) {
+      return astikorLoad != null ? astikorLoad : pullCartLoad;
+    }
+
+    return pullCartLoad.load() / pullCartLoad.overburdenedLoad() > astikorLoad.load() / astikorLoad.overburdenedLoad()
+        ? pullCartLoad : astikorLoad;
+  }
+
+  /**
+   * Makes animals near the players in this level let go of the carts they cannot pull.
+   */
+  public static void refuseOverloadedCarts(final ServerLevel level) {
+    if (isAstikorCartsUsable()) {
+      try {
+        for (final ServerPlayer player : level.players()) {
+          AstikorCartsCompat.refuseOverloadedCarts(player);
+        }
+      } catch (LinkageError | RuntimeException e) {
+        turnAstikorCartsOff(e);
+      }
+    }
+
+    if (isPullCartUsable()) {
+      try {
+        for (final ServerPlayer player : level.players()) {
+          PullCartCompat.refuseOverloadedCart(player);
+        }
+      } catch (LinkageError | RuntimeException e) {
+        turnPullCartOff(e);
+      }
     }
   }
+
+  /**
+   * Burdens a player who pulls an overloaded Pull Cart cart on foot. TFC Astikor Carts does that itself.
+   */
+  public static void burdenWithPullCart(final Player player) {
+    if (isPullCartUsable()) {
+      try {
+        PullCartCompat.burden(player);
+      } catch (LinkageError | RuntimeException e) {
+        turnPullCartOff(e);
+      }
+    }
+  }
+
+  /**
+   * An animal just let go of a cart: it rears and the players around read why, over the hotbar and with the numbers,
+   * since the cart bar goes with the cart.
+   */
+  public static void announceCartRefused(final Entity animal, final Entity cart, final CartLoad load) {
+    if (animal instanceof AbstractHorse horse) {
+      horse.makeMad();
+      // The smoke of a horse that will not have it, which TFC also sends when a horse kicks a rider off
+      cart.level().broadcastEntityEvent(horse, (byte) 6);
+    }
+
+    cart.level().playSound(null, cart.getX(), cart.getY(), cart.getZ(), SoundEvents.LEASH_KNOT_BREAK, SoundSource.NEUTRAL, 1f, 1f);
+
+    final Component message = Component.translatable(Constants.MOD_ID + ".message.cart_refused", animal.getDisplayName(),
+        Math.round(load.load()), Math.round(load.overburdenedLoad()));
+
+    for (final Player near : cart.level().getEntitiesOfClass(Player.class, cart.getBoundingBox().inflate(CART_MESSAGE_RADIUS))) {
+      near.displayClientMessage(message, true);
+    }
+  }
+
+  private static final double CART_MESSAGE_RADIUS = 8;
 
   public static int getMaxInventoryWeight(Player player) {
     Container container = player.getInventory();
