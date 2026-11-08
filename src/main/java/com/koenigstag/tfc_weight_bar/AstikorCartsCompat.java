@@ -1,12 +1,12 @@
 package com.koenigstag.tfc_weight_bar;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-import de.mennomax.astikorcarts.entity.AbstractDrawnEntity;
-import de.mennomax.astikorcarts.world.AstikorWorld;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 import tfcastikorcarts.common.container.SupplyCartContainer;
 import tfcastikorcarts.common.entities.carts.TFCAnimalCartEntity;
@@ -17,10 +17,11 @@ import tfcastikorcarts.config.TFCAstikorCartsConfig;
  * Everything that touches TFC Astikor Carts. It is optional, so call this only through {@link WeightBarHelpers}: loading
  * this class without it fails.
  *
- * <p>Two ways of weighing a cart are around. Since 1.1.9 the cart weighs its cargo as a mass, every item of a stack
- * counted, and compares a hundredth of it with the thresholds in its config. Up to 1.1.8 a slot weighed the same whether
- * it held one item or a full stack. This is built against 1.1.9 and reaches the old counting method by name, since 1.1.9
- * removed it.
+ * <p>Three versions of that mod are around, and this reads them all. Since 1.1.9 the cart weighs its cargo as a mass, every
+ * item of a stack counted, and compares a hundredth of it with the thresholds in its config. Up to 1.1.8 a slot weighed
+ * the same whether it held one item or a full stack. The fork for AstikorCarts Redux 1.2 weighs as 1.1.9 does, but its
+ * carts extend Redux's classes, in another package. So this names only the bridge's own cart classes, never their base
+ * mod's: it is built against 1.1.9 and the rest resolves by name at runtime.
  */
 public final class AstikorCartsCompat {
   // Up to 1.1.8 the animal cart weighs its passengers against these, written into its code rather than its config
@@ -30,10 +31,12 @@ public final class AstikorCartsCompat {
   // A pulled cart stays within a few blocks of whoever pulls it
   private static final double CART_SEARCH_RADIUS = 8;
 
-
   // The supply cart's counting method up to 1.1.8, or null on 1.1.9 and later
   @Nullable
   private static final Method LEGACY_SUPPLY_CART_LOAD = findLegacySupplyCartLoad();
+
+  // Who a cart's inventory screen belongs to; the field's type is the base mod's, so it is reached by name
+  private static final Field MENU_CART = findMenuCart();
 
   private AstikorCartsCompat() {}
 
@@ -51,6 +54,14 @@ public final class AstikorCartsCompat {
     }
   }
 
+  private static Field findMenuCart() {
+    try {
+      return SupplyCartContainer.class.getField("cart");
+    } catch (NoSuchFieldException e) {
+      throw new IllegalStateException("The TFC Astikor Carts inventory screen has no cart this mod knows", e);
+    }
+  }
+
   /**
    * The load of the cart this player pulls on foot, or that the animal they ride pulls, or null when there is none. A
    * plough does not count.
@@ -59,11 +70,19 @@ public final class AstikorCartsCompat {
   public static CartLoad getCartLoad(final Player player) {
     final Entity vehicle = player.getVehicle();
     final Entity puller = vehicle != null ? vehicle : player;
+    final AABB area = player.getBoundingBox().inflate(CART_SEARCH_RADIUS);
 
-    return AstikorWorld.get(player.level()).resolve()
-        .flatMap(world -> world.getDrawn(puller))
-        .map(AstikorCartsCompat::getLoad)
-        .orElse(null);
+    for (final TFCSupplyCartEntity cart : player.level().getEntitiesOfClass(TFCSupplyCartEntity.class, area,
+        drawn -> drawn.getPulling() == puller)) {
+      return getLoad(cart);
+    }
+
+    for (final TFCAnimalCartEntity cart : player.level().getEntitiesOfClass(TFCAnimalCartEntity.class, area,
+        drawn -> drawn.getPulling() == puller)) {
+      return getLoad(cart);
+    }
+
+    return null;
   }
 
   /**
@@ -72,51 +91,62 @@ public final class AstikorCartsCompat {
    * kicks off, with the cart still hitched. A player pulling on foot stays with that mod's debuffs.
    */
   public static void refuseOverloadedCarts(final Player player) {
-    for (final AbstractDrawnEntity cart : player.level().getEntitiesOfClass(AbstractDrawnEntity.class,
-        player.getBoundingBox().inflate(CART_SEARCH_RADIUS),
-        drawn -> drawn.getPulling() instanceof LivingEntity && !(drawn.getPulling() instanceof Player))) {
-      final CartLoad load = getLoad(cart);
+    final AABB area = player.getBoundingBox().inflate(CART_SEARCH_RADIUS);
 
-      if (load != null && load.isOverburdened() && !isBeingLoaded(cart)) {
-        refuse(cart, load);
+    for (final TFCSupplyCartEntity cart : player.level().getEntitiesOfClass(TFCSupplyCartEntity.class, area,
+        drawn -> isAnimal(drawn.getPulling()))) {
+      final CartLoad load = getLoad(cart);
+      final Entity puller = cart.getPulling();
+
+      if (load.isOverburdened() && !isBeingLoaded(cart, puller)) {
+        cart.setPulling(null);
+        WeightBarHelpers.announceCartRefused(puller, cart, load);
+      }
+    }
+
+    for (final TFCAnimalCartEntity cart : player.level().getEntitiesOfClass(TFCAnimalCartEntity.class, area,
+        drawn -> isAnimal(drawn.getPulling()))) {
+      final CartLoad load = getLoad(cart);
+      final Entity puller = cart.getPulling();
+
+      if (load.isOverburdened()) {
+        cart.setPulling(null);
+        WeightBarHelpers.announceCartRefused(puller, cart, load);
       }
     }
   }
 
+  private static boolean isAnimal(@Nullable final Entity puller) {
+    return puller instanceof LivingEntity && !(puller instanceof Player);
+  }
+
   // The cart's inventory hides most of the message over the hotbar, so an animal with no rider waits until the player
   // loading the cart closes it, and they read it whole
-  private static boolean isBeingLoaded(final AbstractDrawnEntity cart) {
-    return cart.getPulling().getPassengers().isEmpty()
+  private static boolean isBeingLoaded(final TFCSupplyCartEntity cart, final Entity puller) {
+    return puller.getPassengers().isEmpty()
         && !cart.level().getEntitiesOfClass(Player.class, cart.getBoundingBox().inflate(CART_SEARCH_RADIUS),
-            near -> near.containerMenu instanceof SupplyCartContainer menu && menu.cart == cart).isEmpty();
+            near -> isMenuOf(near, cart)).isEmpty();
   }
 
-  private static void refuse(final AbstractDrawnEntity cart, final CartLoad load) {
-    final Entity puller = cart.getPulling();
-
-    cart.setPulling(null);
-
-    WeightBarHelpers.announceCartRefused(puller, cart, load);
+  private static boolean isMenuOf(final Player player, final TFCSupplyCartEntity cart) {
+    try {
+      return player.containerMenu instanceof SupplyCartContainer && MENU_CART.get(player.containerMenu) == cart;
+    } catch (IllegalAccessException e) {
+      throw new IllegalStateException("Cannot read the cart of a TFC Astikor Carts inventory screen", e);
+    }
   }
 
-  // The same sums the cart weighs against its thresholds, or null for a cart with no load, such as a plough
-  @Nullable
-  private static CartLoad getLoad(final AbstractDrawnEntity cart) {
-    final boolean legacy = LEGACY_SUPPLY_CART_LOAD != null;
+  // The same sums the cart weighs against its thresholds
+  private static CartLoad getLoad(final TFCSupplyCartEntity supplyCart) {
+    return new CartLoad(LEGACY_SUPPLY_CART_LOAD != null ? getLegacyLoad(supplyCart)
+        : getHundredth(supplyCart.countOverburdenedCargo()), getExhaustedLoad(), getOverburdenedLoad());
+  }
 
-    if (cart instanceof TFCSupplyCartEntity supplyCart) {
-      return new CartLoad(legacy ? getLegacyLoad(supplyCart) : getHundredth(supplyCart.countOverburdenedCargo()),
-          getExhaustedLoad(), getOverburdenedLoad());
-    }
-
-    if (cart instanceof TFCAnimalCartEntity animalCart) {
-      return legacy
-          ? new CartLoad(animalCart.countOverburdened(), LEGACY_ANIMAL_CART_EXHAUSTED_LOAD,
-              LEGACY_ANIMAL_CART_OVERBURDENED_LOAD)
-          : new CartLoad(getHundredth(animalCart.countOverburdened()), getExhaustedLoad(), getOverburdenedLoad());
-    }
-
-    return null;
+  private static CartLoad getLoad(final TFCAnimalCartEntity animalCart) {
+    return LEGACY_SUPPLY_CART_LOAD != null
+        ? new CartLoad(animalCart.countOverburdened(), LEGACY_ANIMAL_CART_EXHAUSTED_LOAD,
+            LEGACY_ANIMAL_CART_OVERBURDENED_LOAD)
+        : new CartLoad(getHundredth(animalCart.countOverburdened()), getExhaustedLoad(), getOverburdenedLoad());
   }
 
   // Since 1.1.9 a cart compares a hundredth of what it counts with its thresholds, and never less than 1
