@@ -35,6 +35,29 @@ public class WeightBarHelpers {
     return ModList.get().isLoaded("tfc_curios_weight");
   }
 
+  // Set once a TFC Astikor Carts version turns out not to match the one this mod was built against
+  private static boolean cartCompatBroken = false;
+
+  /**
+   * The load of the cart that burdens the player, or null when there is none or TFC Astikor Carts is not installed.
+   * Its classes are only reached through AstikorCartsCompat, behind this check.
+   */
+  @Nullable
+  public static CartLoad getCartLoad(final Player player) {
+    if (cartCompatBroken || !ModList.get().isLoaded("tfcastikorcarts")) {
+      return null;
+    }
+
+    try {
+      return AstikorCartsCompat.getCartLoad(player);
+    } catch (LinkageError | RuntimeException e) {
+      // A later version that renamed what this reads should cost the cart bar, not the server
+      cartCompatBroken = true;
+      Constants.LOGGER.error("Cannot read the cart load from TFC Astikor Carts, so the cart bar stays off", e);
+      return null;
+    }
+  }
+
   public static int getMaxInventoryWeight(Player player) {
     Container container = player.getInventory();
 

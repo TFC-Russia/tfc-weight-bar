@@ -6,6 +6,7 @@ import net.minecraft.world.entity.player.Player;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Optional;
 
 public class WeightBarData {
   public static Map<String, Integer> playerWeights = new HashMap<String, Integer>();
@@ -68,7 +69,8 @@ public class WeightBarData {
     // send current state to the client HUD bar
     if (player instanceof ServerPlayer serverPlayer) {
       WeightBarNetwork.sendToPlayer(serverPlayer,
-          new WeightSyncPacket(playerInvWeight, maxInvWeight, isExhausted, isOverburdened));
+          new WeightSyncPacket(playerInvWeight, maxInvWeight, isExhausted, isOverburdened,
+              Optional.ofNullable(WeightBarHelpers.getCartLoad(player))));
     }
 
     Constants.debug("Nickname: " + player.getName() + "; Current Weight: " + playerInvWeight + "; Max Weight: "

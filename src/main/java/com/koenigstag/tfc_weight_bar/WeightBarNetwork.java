@@ -14,7 +14,9 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
  */
 @EventBusSubscriber(modid = Constants.MOD_ID)
 public final class WeightBarNetwork {
-  private static final String PROTOCOL_VERSION = "1";
+  // 2: the weight packet carries the cart load too, so a 1.0.x client and a 1.1.0 server refuse each other, and the
+  // other way round, rather than misread it
+  private static final String PROTOCOL_VERSION = "2";
 
   private WeightBarNetwork() {
   }

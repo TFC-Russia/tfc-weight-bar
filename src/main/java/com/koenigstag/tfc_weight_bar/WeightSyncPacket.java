@@ -6,10 +6,12 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
-// server -> client: current weight state for the HUD bar
+import java.util.Optional;
+
+// server -> client: current weight state for the HUD bar, and the load of the cart the player pulls, if any
 // 1.21 replaced the Forge SimpleChannel message with a CustomPacketPayload and a StreamCodec
-public record WeightSyncPacket(int weight, int maxWeight, boolean exhausted, boolean overburdened)
-    implements CustomPacketPayload {
+public record WeightSyncPacket(int weight, int maxWeight, boolean exhausted, boolean overburdened,
+    Optional<CartLoad> cart) implements CustomPacketPayload {
 
   public static final CustomPacketPayload.Type<WeightSyncPacket> TYPE =
       new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Constants.MOD_ID, "weight_sync"));
@@ -19,6 +21,7 @@ public record WeightSyncPacket(int weight, int maxWeight, boolean exhausted, boo
       ByteBufCodecs.VAR_INT, WeightSyncPacket::maxWeight,
       ByteBufCodecs.BOOL, WeightSyncPacket::exhausted,
       ByteBufCodecs.BOOL, WeightSyncPacket::overburdened,
+      ByteBufCodecs.optional(CartLoad.STREAM_CODEC), WeightSyncPacket::cart,
       WeightSyncPacket::new);
 
   @Override
