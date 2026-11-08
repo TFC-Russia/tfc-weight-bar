@@ -15,6 +15,7 @@
   "tfc_weight_bar.configuration.bar_position.health": "Above health",
   "tfc_weight_bar.configuration.show_bar_numbers": "Numbers on the bar",
   "tfc_weight_bar.configuration.show_bar_numbers.tooltip": "Show the weight on the bar as numbers, such as 720/1000. A server can set this for every player.",
+  "tfc_weight_bar.configuration.forced_by_server": "This server sets it for every player",
   "tfc_weight_bar.configuration.enable_weight_calculations": "Weight system",
   "tfc_weight_bar.configuration.enable_weight_debuffs": "Weight debuffs",
   "tfc_weight_bar.configuration.enable_food_exhaustion": "Hunger from load",

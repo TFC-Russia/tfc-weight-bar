@@ -15,6 +15,7 @@
   "tfc_weight_bar.configuration.bar_position.health": "Над здоровьем",
   "tfc_weight_bar.configuration.show_bar_numbers": "Цифры на полосе",
   "tfc_weight_bar.configuration.show_bar_numbers.tooltip": "Показывать на полосе вес цифрами, например 720/1000. Сервер может задать это за всех игроков.",
+  "tfc_weight_bar.configuration.forced_by_server": "На этом сервере это задано для всех игроков",
   "tfc_weight_bar.configuration.enable_weight_calculations": "Система веса",
   "tfc_weight_bar.configuration.enable_weight_calculations.tooltip": "Включает расчёт веса на сервере.",
   "tfc_weight_bar.configuration.enable_weight_debuffs": "Дебаффы от веса",
