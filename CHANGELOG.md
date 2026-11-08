@@ -9,7 +9,7 @@ Newest version first. The entry of a version is also its GitHub release notes an
 - The HUD bar can sit above the health bar instead of the food bar, and its numbers can be hidden: `bar_position` and `show_bar_numbers` in the client config.
 - Mods > TFC Weight Bar > Config edits the client options in game, and the HUD follows at once, without a restart. The server options stay in the server config file.
 - A server can settle the HUD options for every player: `force_weight_display`, `force_bar_position` and `force_bar_numbers` in the server config. CLIENT, the default, leaves each one to the player, and the config screen shows an option the server settles as locked.
-- With TFC Astikor Carts, a brown bar above the weight bar shows the load of the cart you pull, or draw with the horse you ride, against the loads at which that mod makes you Exhausted and Overburdened. The cart's load still does not count towards your weight.
+- With TFC Astikor Carts, a brown bar above the weight bar shows the load of the cart that burdens you, against the loads at which that mod makes you Exhausted and Overburdened. The load is counted the way your version of that mod counts it: by the mass of every item since 1.1.9, by the slot before, a single item as much as a full stack. The cart's load still does not count towards your weight.
 - A 1.0.x client cannot join a 1.1.0 server, nor the other way round: the weight the server sends now carries the cart load too, so the client and the server both need 1.1.0.
 
 ## 1.0.3
