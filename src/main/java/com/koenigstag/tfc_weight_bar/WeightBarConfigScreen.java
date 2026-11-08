@@ -35,32 +35,38 @@ public class WeightBarConfigScreen extends Screen {
 
   @Override
   protected void init() {
-    // Each button starts on the value in effect, which is the server's when it decides the option for everyone
+    // Each button starts on the value in effect, which is the server's when it decides the option for everyone. Outside
+    // a world the force values are left over from the last server, which no longer decides anything
+    final boolean inWorld = minecraft.level != null;
+    final boolean displayForced = inWorld && Config.forceWeightDisplay != Config.ForceWeightDisplay.CLIENT;
+    final boolean positionForced = inWorld && Config.forceBarPosition != Config.ForceBarPosition.CLIENT;
+    final boolean numbersForced = inWorld && Config.forceBarNumbers != Config.ForceToggle.CLIENT;
+
     final int x = width / 2 - 100;
     int y = height / 4;
 
     addOption(CycleButton.<Config.WeightDisplay>builder(
             display -> Component.translatable(KEY + "weight_display." + display.name().toLowerCase(Locale.ROOT)))
         .withValues(Config.WeightDisplay.values())
-        .withInitialValue(Config.getWeightDisplay())
+        .withInitialValue(displayForced ? Config.getWeightDisplay() : Config.weightDisplay)
         .create(x, y, 200, 20, Component.translatable(KEY + "weight_display"),
             (button, value) -> Config.setWeightDisplay(value)),
-        "weight_display", Config.forceWeightDisplay != Config.ForceWeightDisplay.CLIENT);
+        "weight_display", displayForced);
     y += 24;
 
     addOption(CycleButton.<Config.BarPosition>builder(
             position -> Component.translatable(KEY + "bar_position." + position.name().toLowerCase(Locale.ROOT)))
         .withValues(Config.BarPosition.values())
-        .withInitialValue(Config.getBarPosition())
+        .withInitialValue(positionForced ? Config.getBarPosition() : Config.barPosition)
         .create(x, y, 200, 20, Component.translatable(KEY + "bar_position"),
             (button, value) -> Config.setBarPosition(value)),
-        "bar_position", Config.forceBarPosition != Config.ForceBarPosition.CLIENT);
+        "bar_position", positionForced);
     y += 24;
 
-    addOption(CycleButton.onOffBuilder(Config.areBarNumbersShown())
+    addOption(CycleButton.onOffBuilder(numbersForced ? Config.areBarNumbersShown() : Config.showBarNumbers)
         .create(x, y, 200, 20, Component.translatable(KEY + "show_bar_numbers"),
             (button, value) -> Config.setShowBarNumbers(value)),
-        "show_bar_numbers", Config.forceBarNumbers != Config.ForceToggle.CLIENT);
+        "show_bar_numbers", numbersForced);
 
     addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> onClose())
         .bounds(x, height - 28, 200, 20)
