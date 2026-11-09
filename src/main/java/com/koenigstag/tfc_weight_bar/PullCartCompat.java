@@ -102,7 +102,8 @@ public final class PullCartCompat {
     }
 
     return new CartLoad(WeightBarHelpers.calculateContainerWeight(chest, player.registryAccess()),
-        (float) (maxLoad * Config.getExhaustedWeightCoefficient()), maxLoad);
+        (float) (maxLoad * Config.getExhaustedWeightCoefficient()), maxLoad,
+        WeightBarHelpers.countLargeItemSlots(chest), Config.pullCartMaxLargeItemSlots);
   }
 
   @Nullable

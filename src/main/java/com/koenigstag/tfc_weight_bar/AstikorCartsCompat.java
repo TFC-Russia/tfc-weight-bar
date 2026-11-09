@@ -1,12 +1,16 @@
 package com.koenigstag.tfc_weight_bar;
 
+import net.dries007.tfc.common.component.size.IItemSize;
+import net.dries007.tfc.common.component.size.ItemSizeManager;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import tfcastikorcarts.common.container.DynamicGridContainer;
 import tfcastikorcarts.common.entities.carts.TFCAbstractDrawnEntity;
 import tfcastikorcarts.common.entities.carts.TFCAbstractDrawnInventoryEntity;
 import tfcastikorcarts.config.TFCAstikorCartsConfig;
+import tfcastikorcarts.util.AstikorHelpers;
 
 import javax.annotation.Nullable;
 
@@ -23,11 +27,15 @@ public final class AstikorCartsCompat {
 
   /**
    * The load of the cart this player pulls on foot, or that the animal they ride pulls, or null when there is none. A
-   * plough or seed drill does not count.
+   * plough or seed drill does not count. With count_cart_riders, also of the cart the player sits on.
    */
   @Nullable
   public static CartLoad getCartLoad(final Player player) {
     final Entity vehicle = player.getVehicle();
+    if (Config.countCartRiders && vehicle instanceof TFCAbstractDrawnEntity cart && cart.affectedByCargo()) {
+      return getLoad(cart);
+    }
+
     final Entity puller = vehicle != null ? vehicle : player;
 
     return player.level().getEntitiesOfClass(TFCAbstractDrawnEntity.class,
@@ -70,14 +78,53 @@ public final class AstikorCartsCompat {
   }
 
   // The same sums the cart weighs against its thresholds: the cargo of a cart with an inventory, or else its passengers,
-  // either one a hundredth of its mass in kilograms and never under 1
+  // either one a hundredth of its mass in kilograms and never under 1. count_cart_riders adds the players sitting on it,
+  // and a cart with an inventory counts its slots that hold large items.
   private static CartLoad getLoad(final TFCAbstractDrawnEntity cart) {
-    final double mass = cart instanceof TFCAbstractDrawnInventoryEntity inventoryCart
-        ? inventoryCart.countOverburdenedCargo()
-        : cart.countOverburdened();
+    if (cart instanceof TFCAbstractDrawnInventoryEntity inventoryCart) {
+      return new CartLoad(getHundredth(inventoryCart.countOverburdenedCargo() + countRiders(cart, false)),
+          getExhaustedLoad(), getOverburdenedLoad(), WeightBarHelpers.countLargeItemSlots(inventoryCart),
+          Config.enableCartLimits ? Config.astikorMaxLargeItemSlots : 0);
+    }
 
-    return new CartLoad((float) Math.max(mass * 0.01, 1.0),
-        TFCAstikorCartsConfig.COMMON.exhaustedThreshold.get().floatValue(),
-        TFCAstikorCartsConfig.COMMON.overburdenedThreshold.get().floatValue());
+    return new CartLoad(getHundredth(cart.countOverburdened() + countRiders(cart, true)), getExhaustedLoad(),
+        getOverburdenedLoad());
+  }
+
+  /**
+   * The mass of the players sitting on this cart, as the cart counts its own: each one's body as the mod weighs a
+   * passenger, and each stack they carry as it weighs cargo. A cart without an inventory already counts the bodies of
+   * its passengers but the one who drives it, so then only the driver's body is added. 0 unless count_cart_riders is on.
+   */
+  private static double countRiders(final TFCAbstractDrawnEntity cart, final boolean countsPassengerBodies) {
+    if (!Config.countCartRiders) {
+      return 0;
+    }
+
+    double mass = 0;
+    for (final Entity passenger : cart.getPassengers()) {
+      if (passenger instanceof Player rider) {
+        if (!countsPassengerBodies || passenger == cart.getControllingPassenger()) {
+          mass += AstikorHelpers.getEstimatedMassKg(rider.getBoundingBox());
+        }
+        for (final ItemStack stack : WeightBarHelpers.getCarriedStacks(rider)) {
+          final IItemSize size = ItemSizeManager.get(stack);
+          mass += AstikorHelpers.getEstimatedMassKg(stack, size.getSize(stack), size.getWeight(stack));
+        }
+      }
+    }
+    return mass;
+  }
+
+  private static float getHundredth(final double mass) {
+    return (float) Math.max(mass * 0.01, 1.0);
+  }
+
+  private static float getExhaustedLoad() {
+    return TFCAstikorCartsConfig.COMMON.exhaustedThreshold.get().floatValue();
+  }
+
+  private static float getOverburdenedLoad() {
+    return TFCAstikorCartsConfig.COMMON.overburdenedThreshold.get().floatValue();
   }
 }
