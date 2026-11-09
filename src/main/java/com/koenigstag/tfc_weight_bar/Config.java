@@ -162,6 +162,22 @@ public class Config {
     .comment("With Pull Cart: the weight a cart's chest can hold before the cart is overloaded, counted as in a player's inventory. It is exhausting from exhausted_weight_percentage of this. Default: 4000")
     .defineInRange("pull_cart_max_load", 4000, 1, Integer.MAX_VALUE);
 
+  private static final ForgeConfigSpec.BooleanValue COUNT_CART_RIDERS = SERVER_BUILDER
+    .comment("With TFC Astikor Carts 1.1.9 or later: whether a player sitting on a cart adds to its load, their body weighed as that mod weighs a passenger and what they carry weighed as cargo. Such a player also sees the cart bar. Default: false")
+    .define("count_cart_riders", false);
+
+  private static final ForgeConfigSpec.EnumValue<Size> LARGE_ITEM_SIZE = SERVER_BUILDER
+    .comment("The smallest TFC size of item that counts as large for astikor_max_large_item_slots and pull_cart_max_large_item_slots. Default: LARGE")
+    .defineEnum("large_item_size", Size.LARGE);
+
+  private static final ForgeConfigSpec.IntValue ASTIKOR_MAX_LARGE_ITEM_SLOTS = SERVER_BUILDER
+    .comment("With TFC Astikor Carts: how many slots of a cart may hold large items before the cart is overloaded, whatever its load. 0 sets no such limit. Default: 0")
+    .defineInRange("astikor_max_large_item_slots", 0, 0, Integer.MAX_VALUE);
+
+  private static final ForgeConfigSpec.IntValue PULL_CART_MAX_LARGE_ITEM_SLOTS = SERVER_BUILDER
+    .comment("With Pull Cart: how many slots of a cart's chest may hold large items before the cart is overloaded, whatever its load. 0 sets no such limit. Default: 0")
+    .defineInRange("pull_cart_max_large_item_slots", 0, 0, Integer.MAX_VALUE);
+
   // The server sends its config to every client that joins, so these settle the HUD for all players on it
   private static final ForgeConfigSpec.EnumValue<ForceWeightDisplay> FORCE_WEIGHT_DISPLAY = SERVER_BUILDER
     .comment("Decides weight_display for every player: CLIENT leaves it to each player's client config, HUD, TEXT or OFF shows every player the weight that way. Default: CLIENT")
@@ -201,6 +217,10 @@ public class Config {
   public static boolean enableFoodExhaustion;
   public static boolean enableCartLimits;
   public static int pullCartMaxLoad;
+  public static boolean countCartRiders;
+  public static Size largeItemSize = Size.LARGE;
+  public static int astikorMaxLargeItemSlots;
+  public static int pullCartMaxLargeItemSlots;
   public static boolean healthAffectsWeightCapacity;
   public static double minHealthWeightPercentage;
 
@@ -235,6 +255,10 @@ public class Config {
       enableFoodExhaustion = ENABLE_FOOD_EXHAUSTION.get();
       enableCartLimits = ENABLE_CART_LIMITS.get();
       pullCartMaxLoad = PULL_CART_MAX_LOAD.get();
+      countCartRiders = COUNT_CART_RIDERS.get();
+      largeItemSize = LARGE_ITEM_SIZE.get();
+      astikorMaxLargeItemSlots = ASTIKOR_MAX_LARGE_ITEM_SLOTS.get();
+      pullCartMaxLargeItemSlots = PULL_CART_MAX_LARGE_ITEM_SLOTS.get();
 
       veryLightWeightInt = VERY_LIGHT_WEIGHT.get();
       lightWeightInt = LIGHT_WEIGHT.get();

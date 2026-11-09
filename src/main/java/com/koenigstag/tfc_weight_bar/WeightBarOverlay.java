@@ -119,10 +119,10 @@ public class WeightBarOverlay {
   /**
    * How full the cart bar is. TFC Astikor Carts makes the player Exhausted past one load and Overburdened past another,
    * at a ratio of its own, so the bar puts the first where its pink last section starts and the second at its end:
-   * pink means Exhausted and full means Overburdened, as on the weight bar.
+   * pink means Exhausted and full means Overburdened, as on the weight bar. Too many large items fill it too.
    */
   static double getCartFill(final CartLoad cart) {
-    if (cart.overburdenedLoad() <= 0) {
+    if (cart.overburdenedLoad() <= 0 || cart.hasTooManyLargeItems()) {
       return 1;
     }
     if (cart.exhaustedLoad() <= 0 || cart.exhaustedLoad() >= cart.overburdenedLoad()) {

@@ -3,15 +3,19 @@ package com.koenigstag.tfc_weight_bar;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+import net.dries007.tfc.common.capabilities.size.IItemSize;
+import net.dries007.tfc.common.capabilities.size.ItemSizeManager;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 import tfcastikorcarts.common.container.SupplyCartContainer;
 import tfcastikorcarts.common.entities.carts.TFCAnimalCartEntity;
 import tfcastikorcarts.common.entities.carts.TFCSupplyCartEntity;
 import tfcastikorcarts.config.TFCAstikorCartsConfig;
+import tfcastikorcarts.util.AstikorHelpers;
 
 /**
  * Everything that touches TFC Astikor Carts. It is optional, so call this only through {@link WeightBarHelpers}: loading
@@ -64,11 +68,18 @@ public final class AstikorCartsCompat {
 
   /**
    * The load of the cart this player pulls on foot, or that the animal they ride pulls, or null when there is none. A
-   * plough does not count.
+   * plough does not count. With count_cart_riders, also of the cart the player sits on.
    */
   @Nullable
   public static CartLoad getCartLoad(final Player player) {
     final Entity vehicle = player.getVehicle();
+    if (Config.countCartRiders && vehicle instanceof TFCSupplyCartEntity supplyCart) {
+      return getLoad(supplyCart);
+    }
+    if (Config.countCartRiders && vehicle instanceof TFCAnimalCartEntity animalCart) {
+      return getLoad(animalCart);
+    }
+
     final Entity puller = vehicle != null ? vehicle : player;
     final AABB area = player.getBoundingBox().inflate(CART_SEARCH_RADIUS);
 
@@ -136,17 +147,47 @@ public final class AstikorCartsCompat {
     }
   }
 
-  // The same sums the cart weighs against its thresholds
+  // The same sums the cart weighs against its thresholds, with its riders when count_cart_riders adds them, and its
+  // slots that hold large items. Every version's supply cart is a Container.
   private static CartLoad getLoad(final TFCSupplyCartEntity supplyCart) {
     return new CartLoad(LEGACY_SUPPLY_CART_LOAD != null ? getLegacyLoad(supplyCart)
-        : getHundredth(supplyCart.countOverburdenedCargo()), getExhaustedLoad(), getOverburdenedLoad());
+        : getHundredth(supplyCart.countOverburdenedCargo() + countRiders(supplyCart)), getExhaustedLoad(),
+        getOverburdenedLoad(), WeightBarHelpers.countLargeItemSlots(supplyCart), getMaxLargeItemSlots());
   }
 
   private static CartLoad getLoad(final TFCAnimalCartEntity animalCart) {
     return LEGACY_SUPPLY_CART_LOAD != null
         ? new CartLoad(animalCart.countOverburdened(), LEGACY_ANIMAL_CART_EXHAUSTED_LOAD,
             LEGACY_ANIMAL_CART_OVERBURDENED_LOAD)
-        : new CartLoad(getHundredth(animalCart.countOverburdened()), getExhaustedLoad(), getOverburdenedLoad());
+        : new CartLoad(getHundredth(animalCart.countOverburdened() + countRiders(animalCart)), getExhaustedLoad(),
+            getOverburdenedLoad());
+  }
+
+  /**
+   * The mass of the players sitting on this cart, as the cart counts its own: each one's body as the mod weighs an
+   * animal cart's passenger, and each stack they carry as it weighs cargo. 0 unless count_cart_riders is on. Only 1.1.9
+   * and later have these sums, so up to 1.1.8 riders never count.
+   */
+  private static double countRiders(final Entity cart) {
+    if (!Config.countCartRiders) {
+      return 0;
+    }
+
+    double mass = 0;
+    for (final Entity passenger : cart.getPassengers()) {
+      if (passenger instanceof Player rider) {
+        mass += AstikorHelpers.getEstimatedMassKg(rider.getBoundingBox());
+        for (final ItemStack stack : WeightBarHelpers.getCarriedStacks(rider)) {
+          final IItemSize size = ItemSizeManager.get(stack);
+          mass += AstikorHelpers.getEstimatedMassKg(stack, size.getSize(stack), size.getWeight(stack));
+        }
+      }
+    }
+    return mass;
+  }
+
+  private static int getMaxLargeItemSlots() {
+    return Config.enableCartLimits ? Config.astikorMaxLargeItemSlots : 0;
   }
 
   // Since 1.1.9 a cart compares a hundredth of what it counts with its thresholds, and never less than 1

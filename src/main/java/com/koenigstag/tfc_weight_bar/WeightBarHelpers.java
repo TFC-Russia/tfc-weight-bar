@@ -29,6 +29,9 @@ import net.dries007.tfc.common.items.VesselItem;
 import net.dries007.tfc.common.TFCEffects;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class WeightBarHelpers {
 
   // Curios and TFC Curios Weight are optional: their classes are only reached through CuriosCompat and
@@ -95,8 +98,44 @@ public class WeightBarHelpers {
       return astikorLoad != null ? astikorLoad : pullCartLoad;
     }
 
-    return pullCartLoad.load() / pullCartLoad.overburdenedLoad() > astikorLoad.load() / astikorLoad.overburdenedLoad()
-        ? pullCartLoad : astikorLoad;
+    return pullCartLoad.getFullness() > astikorLoad.getFullness() ? pullCartLoad : astikorLoad;
+  }
+
+  /**
+   * How many slots of this container hold items of large_item_size or bigger.
+   */
+  public static int countLargeItemSlots(final Container container) {
+    int count = 0;
+
+    for (int i = 0; i < container.getContainerSize(); i++) {
+      final ItemStack stack = container.getItem(i);
+      if (!stack.isEmpty() && !ItemSizeManager.get(stack).getSize(stack).isSmallerThan(Config.largeItemSize)) {
+        count++;
+      }
+    }
+
+    return count;
+  }
+
+  /**
+   * Every stack the player carries where this mod weighs it: the inventory, armour and offhand included, and the Curios
+   * slots that curios_slots picks. Items inside these are left in them.
+   */
+  public static List<ItemStack> getCarriedStacks(final Player player) {
+    final List<ItemStack> stacks = new ArrayList<>();
+    final Container inventory = player.getInventory();
+
+    for (int i = 0; i < inventory.getContainerSize(); i++) {
+      if (!inventory.getItem(i).isEmpty()) {
+        stacks.add(inventory.getItem(i));
+      }
+    }
+
+    if (isCuriosLoaded()) {
+      stacks.addAll(CuriosCompat.getWeighedCurios(player));
+    }
+
+    return stacks;
   }
 
   /**
@@ -150,8 +189,11 @@ public class WeightBarHelpers {
 
     cart.level().playSound(null, cart.getX(), cart.getY(), cart.getZ(), SoundEvents.LEASH_KNOT_BREAK, SoundSource.NEUTRAL, 1f, 1f);
 
-    final Component message = Component.translatable(Constants.MOD_ID + ".message.cart_refused", animal.getDisplayName(),
-        Math.round(load.load()), Math.round(load.overburdenedLoad()));
+    final Component message = load.load() <= load.overburdenedLoad() && load.hasTooManyLargeItems()
+        ? Component.translatable(Constants.MOD_ID + ".message.cart_refused_large_items", animal.getDisplayName(),
+            load.largeItemSlots(), load.maxLargeItemSlots())
+        : Component.translatable(Constants.MOD_ID + ".message.cart_refused", animal.getDisplayName(),
+            Math.round(load.load()), Math.round(load.overburdenedLoad()));
 
     for (final Player near : cart.level().getEntitiesOfClass(Player.class, cart.getBoundingBox().inflate(CART_MESSAGE_RADIUS))) {
       near.displayClientMessage(message, true);

@@ -3,6 +3,7 @@
   "tfc_weight_bar.tooltip.weight_format": "Weight: %d %s",
   "tfc_weight_bar.message.weight_format": "Weight: %d/%d (%d%%)",
   "tfc_weight_bar.message.cart_refused": "%1$s won't pull this cart: load %2$s, limit %3$s. Take some cargo out.",
+  "tfc_weight_bar.message.cart_refused_large_items": "%1$s won't pull this cart: %2$s slots hold large items, limit %3$s. Take some out.",
   "tfc_weight_bar.status.overburden": "You are overburdened",
   "tfc_weight_bar.configuration.title": "TFC Weight Bar",
   "tfc_weight_bar.configuration.weight_display": "Weight display",
