@@ -46,7 +46,8 @@ debuffs.
 - **HUD bar.** A weight bar above the TFC food bar, or above the health bar, changes colour as you
   near your limit. It can hide its numbers, give way to a message above the hotbar, or be turned off.
 - **Cart bar and limit.** With TFC Astikor Carts or Pull Cart, a brown bar above the weight bar shows how
-  loaded the cart you pull is. Past its limit you are Overburdened on foot, and an animal you ride refuses
+  loaded the cart you pull is, weighed like your inventory, a sack with what it holds. Past its limit you
+  are Overburdened on foot, and an animal you ride refuses
   the cart: it lets go and you read why. The cart's load does not add to your weight, and both can be
   turned off.
 - **Tooltips.** Item tooltips show the item's weight, and say so when an item is too heavy to carry.
@@ -81,7 +82,8 @@ A port of MC+ Cart by andykuo1, and it knows TerraFirmaCraft's item sizes.
 `config/tfc_weight_bar-server.toml` on 1.21.1: the maximum weight (1000 by default), the Exhausted
 threshold, the points per weight class, the health rule, the Curios slot types that count
 (`curios_slots`, every slot by default), switches for the debuffs, the food exhaustion and the whole
-system, and for carts `enable_cart_limits`, `pull_cart_max_load`, `count_cart_riders` and the limits on
+system, and for carts `enable_cart_limits`, `astikor_supply_cart_max_load`, `astikor_hand_cart_max_load` (the hand cart
+is on 1.21.1), `pull_cart_max_load`, `count_cart_riders` and the limits on
 slots of large items. It can also settle the HUD options
 below for every player on the server (`force_weight_display`, `force_bar_position`,
 `force_bar_numbers`, `force_cart_bar`); by default each player picks their own.

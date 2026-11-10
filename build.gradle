@@ -3,6 +3,7 @@ plugins {
     id 'idea'
     id 'maven-publish'
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+    id 'org.spongepowered.mixin' version '0.7.+'
 }
 
 version = mod_version
@@ -62,6 +63,13 @@ minecraft {
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
+// The one mixin patches TFC Astikor Carts by name, with nothing to remap, so it applies whether that mod is there or
+// not; the plugin still lists the config in the jar and in the dev runs
+mixin {
+    add sourceSets.main, "${mod_id}.refmap.json"
+    config "${mod_id}.mixins.json"
+}
+
 repositories {
     // https://www.cursemaven.com/forge
     maven {
@@ -85,6 +93,8 @@ repositories {
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
     implementation fg.deobf("curse.maven:terrafirmacraft-302973:$tfcFileID")
 

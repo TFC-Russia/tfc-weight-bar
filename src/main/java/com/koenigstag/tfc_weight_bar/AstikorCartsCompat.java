@@ -26,6 +26,9 @@ import tfcastikorcarts.util.AstikorHelpers;
  * the same whether it held one item or a full stack. The fork for AstikorCarts Redux 1.2 weighs as 1.1.9 does, but its
  * carts extend Redux's classes, in another package. So this names only the bridge's own cart classes, never their base
  * mod's: it is built against 1.1.9 and the rest resolves by name at runtime.
+ *
+ * <p>Under enable_cart_limits none of those sums counts for a supply cart: this mod weighs what it holds as a player's
+ * inventory, against astikor_supply_cart_max_load, and burdens by that alone, the same on every version.
  */
 public final class AstikorCartsCompat {
   // Up to 1.1.8 the animal cart weighs its passengers against these, written into its code rather than its config
@@ -97,9 +100,33 @@ public final class AstikorCartsCompat {
   }
 
   /**
-   * Makes each animal near this player let go of a cart loaded past what TFC Astikor Carts lets a player pull. Since
-   * 1.1.9 that mod has no limit of its own for an animal, and up to 1.1.8 it burdens the rider, whom a TFC horse then
-   * kicks off, with the cart still hitched. A player pulling on foot stays with that mod's debuffs.
+   * Burdens a player who pulls an overloaded supply cart on foot, with the effects of a load they carry. Under
+   * enable_cart_limits the cart's own debuffs for its cargo are off, see TFCSupplyCartEntityMixin, so these take their
+   * place.
+   */
+  public static void burden(final Player player) {
+    if (player.getVehicle() != null) {
+      return;
+    }
+
+    for (final TFCSupplyCartEntity cart : player.level().getEntitiesOfClass(TFCSupplyCartEntity.class,
+        player.getBoundingBox().inflate(CART_SEARCH_RADIUS), drawn -> drawn.getPulling() == player)) {
+      final CartLoad load = getLoad(cart);
+
+      if (load.isOverburdened()) {
+        player.addEffect(WeightBarHelpers.getOverburdened(false));
+      } else if (load.isExhausted()) {
+        player.addEffect(WeightBarHelpers.getExhausted(false));
+      }
+      return;
+    }
+  }
+
+  /**
+   * Makes each animal near this player let go of a cart loaded past its limit: a supply cart past
+   * astikor_supply_cart_max_load, an animal cart past what TFC Astikor Carts lets a player pull. Since 1.1.9 that mod has
+   * no limit of its own for an animal, and up to 1.1.8 it burdens the rider, whom a TFC horse then kicks off, with the
+   * cart still hitched.
    */
   public static void refuseOverloadedCarts(final Player player) {
     final AABB area = player.getBoundingBox().inflate(CART_SEARCH_RADIUS);
@@ -147,12 +174,39 @@ public final class AstikorCartsCompat {
     }
   }
 
-  // The same sums the cart weighs against its thresholds, with its riders when count_cart_riders adds them, and its
-  // slots that hold large items. Every version's supply cart is a Container.
+  // Under enable_cart_limits, what the cart holds weighed as a player's inventory, containers with what they hold, and
+  // its riders' own weight when count_cart_riders adds them, up to astikor_supply_cart_max_load; and its slots that hold
+  // large items. Otherwise the same sums the cart weighs against its thresholds. Every version's supply cart is a
+  // Container.
   private static CartLoad getLoad(final TFCSupplyCartEntity supplyCart) {
+    if (Config.enableCartLimits) {
+      final int maxLoad = Config.astikorSupplyCartMaxLoad;
+
+      return new CartLoad(WeightBarHelpers.calculateContainerWeight(supplyCart) + weighRiders(supplyCart),
+          (float) (maxLoad * Config.getExhaustedWeightCoefficient()), maxLoad,
+          WeightBarHelpers.countLargeItemSlots(supplyCart), Config.astikorMaxLargeItemSlots);
+    }
+
     return new CartLoad(LEGACY_SUPPLY_CART_LOAD != null ? getLegacyLoad(supplyCart)
         : getHundredth(supplyCart.countOverburdenedCargo() + countRiders(supplyCart)), getExhaustedLoad(),
-        getOverburdenedLoad(), WeightBarHelpers.countLargeItemSlots(supplyCart), getMaxLargeItemSlots());
+        getOverburdenedLoad());
+  }
+
+  /**
+   * The weight the players sitting on this cart carry, as their own bars show it. 0 unless count_cart_riders is on.
+   */
+  private static int weighRiders(final Entity cart) {
+    if (!Config.countCartRiders) {
+      return 0;
+    }
+
+    int weight = 0;
+    for (final Entity passenger : cart.getPassengers()) {
+      if (passenger instanceof Player rider) {
+        weight += WeightBarHelpers.calculatePlayerFullWeight(rider);
+      }
+    }
+    return weight;
   }
 
   private static CartLoad getLoad(final TFCAnimalCartEntity animalCart) {
@@ -184,10 +238,6 @@ public final class AstikorCartsCompat {
       }
     }
     return mass;
-  }
-
-  private static int getMaxLargeItemSlots() {
-    return Config.enableCartLimits ? Config.astikorMaxLargeItemSlots : 0;
   }
 
   // Since 1.1.9 a cart compares a hundredth of what it counts with its thresholds, and never less than 1
