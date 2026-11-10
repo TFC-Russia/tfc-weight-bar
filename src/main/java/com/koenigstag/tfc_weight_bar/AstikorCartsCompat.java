@@ -9,6 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import tfcastikorcarts.common.container.DynamicGridContainer;
 import tfcastikorcarts.common.entities.carts.TFCAbstractDrawnEntity;
 import tfcastikorcarts.common.entities.carts.TFCAbstractDrawnInventoryEntity;
+import tfcastikorcarts.common.entities.carts.TFCHandCartEntity;
 import tfcastikorcarts.config.TFCAstikorCartsConfig;
 import tfcastikorcarts.util.AstikorHelpers;
 
@@ -17,6 +18,10 @@ import javax.annotation.Nullable;
 /**
  * Everything that touches TFC Astikor Carts. It is optional, so call this only through {@link WeightBarHelpers}: loading
  * this class without it fails.
+ *
+ * <p>Under enable_cart_limits a cart with an inventory, the supply cart or the hand cart, is weighed as a player's
+ * inventory, each against a limit of its own, and burdens by that alone: TFCAbstractDrawnInventoryEntityMixin keeps the
+ * cart's own sum of its cargo from burdening anyone. The animal cart, which carries animals, keeps that mod's scale.
  */
 public final class AstikorCartsCompat {
   // A pulled cart stays within a few blocks of whoever pulls it
@@ -45,8 +50,32 @@ public final class AstikorCartsCompat {
   }
 
   /**
-   * Makes each animal near this player let go of a cart loaded past what TFC Astikor Carts lets a player pull. That mod
-   * has no limit of its own for an animal. A player pulling on foot stays with that mod's debuffs.
+   * Burdens a player who pulls an overloaded cart with an inventory on foot, with the effects of a load they carry. The
+   * cart's own debuffs for its cargo are off while this mod weighs it, so these take their place.
+   */
+  public static void burden(final Player player) {
+    if (player.getVehicle() != null) {
+      return;
+    }
+
+    for (final TFCAbstractDrawnInventoryEntity cart : player.level().getEntitiesOfClass(
+        TFCAbstractDrawnInventoryEntity.class, player.getBoundingBox().inflate(CART_SEARCH_RADIUS),
+        drawn -> drawn.getPulling() == player && drawn.affectedByCargo())) {
+      final CartLoad load = getLoad(cart);
+
+      if (load.isOverburdened()) {
+        player.addEffect(WeightBarHelpers.getOverburdened(false));
+      } else if (load.isExhausted()) {
+        player.addEffect(WeightBarHelpers.getExhausted(false));
+      }
+      return;
+    }
+  }
+
+  /**
+   * Makes each animal near this player let go of a cart loaded past its limit: a cart with an inventory past its
+   * astikor_*_max_load, the animal cart past what TFC Astikor Carts lets a player pull. That mod has no limit of its own
+   * for an animal.
    */
   public static void refuseOverloadedCarts(final Player player) {
     for (final TFCAbstractDrawnEntity cart : player.level().getEntitiesOfClass(TFCAbstractDrawnEntity.class,
@@ -77,18 +106,49 @@ public final class AstikorCartsCompat {
     WeightBarHelpers.announceCartRefused(puller, cart, load);
   }
 
-  // The same sums the cart weighs against its thresholds: the cargo of a cart with an inventory, or else its passengers,
-  // either one a hundredth of its mass in kilograms and never under 1. count_cart_riders adds the players sitting on it,
-  // and a cart with an inventory counts its slots that hold large items.
+  // A cart with an inventory under enable_cart_limits: what it holds weighed as a player's inventory, containers with
+  // what they hold, and its riders' own weight when count_cart_riders adds them, against its limit; and its slots that
+  // hold large items. Otherwise the same sums the cart weighs against its thresholds: the cargo of a cart with an
+  // inventory, or else its passengers, either one a hundredth of its mass in kilograms and never under 1.
   private static CartLoad getLoad(final TFCAbstractDrawnEntity cart) {
     if (cart instanceof TFCAbstractDrawnInventoryEntity inventoryCart) {
+      if (Config.enableCartLimits) {
+        final int maxLoad = getMaxLoad(inventoryCart);
+
+        return new CartLoad(
+            WeightBarHelpers.calculateContainerWeight(inventoryCart, cart.level().registryAccess()) + weighRiders(cart),
+            (float) (maxLoad * Config.getExhaustedWeightCoefficient()), maxLoad,
+            WeightBarHelpers.countLargeItemSlots(inventoryCart), Config.astikorMaxLargeItemSlots);
+      }
+
       return new CartLoad(getHundredth(inventoryCart.countOverburdenedCargo() + countRiders(cart, false)),
-          getExhaustedLoad(), getOverburdenedLoad(), WeightBarHelpers.countLargeItemSlots(inventoryCart),
-          Config.enableCartLimits ? Config.astikorMaxLargeItemSlots : 0);
+          getExhaustedLoad(), getOverburdenedLoad());
     }
 
     return new CartLoad(getHundredth(cart.countOverburdened() + countRiders(cart, true)), getExhaustedLoad(),
         getOverburdenedLoad());
+  }
+
+  // The hand cart has a limit of its own; the supply cart's covers it and any other cart with cargo
+  private static int getMaxLoad(final TFCAbstractDrawnInventoryEntity cart) {
+    return cart instanceof TFCHandCartEntity ? Config.astikorHandCartMaxLoad : Config.astikorSupplyCartMaxLoad;
+  }
+
+  /**
+   * The weight the players sitting on this cart carry, as their own bars show it. 0 unless count_cart_riders is on.
+   */
+  private static int weighRiders(final Entity cart) {
+    if (!Config.countCartRiders) {
+      return 0;
+    }
+
+    int weight = 0;
+    for (final Entity passenger : cart.getPassengers()) {
+      if (passenger instanceof Player rider) {
+        weight += WeightBarHelpers.calculatePlayerFullWeight(rider);
+      }
+    }
+    return weight;
   }
 
   /**

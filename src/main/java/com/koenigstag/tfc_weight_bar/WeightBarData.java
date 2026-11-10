@@ -67,7 +67,7 @@ public class WeightBarData {
     }
 
     if (Config.enableCartLimits && Config.enableWeightDebuffs) {
-      WeightBarHelpers.burdenWithPullCart(player);
+      WeightBarHelpers.burdenWithCarts(player);
     }
 
     // send current state to the client HUD bar

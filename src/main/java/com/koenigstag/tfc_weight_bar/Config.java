@@ -182,15 +182,23 @@ public class Config {
     .defineListAllowEmpty("curios_slots", List.of(), () -> "back", obj -> obj instanceof String);
 
   private static final ModConfigSpec.BooleanValue ENABLE_CART_LIMITS = SERVER_BUILDER
-    .comment("Whether carts have a limit: an animal lets go of a cart loaded past it, and tells the players around, and with Pull Cart a player pulling such a cart on foot is burdened. With TFC Astikor Carts the limit is that mod's overburdenedThreshold, and its own debuffs stay either way. Default: true")
+    .comment("Whether carts have a limit of weight: an animal lets go of a cart loaded past it, and tells the players around, and a player pulling such a cart on foot is burdened as by a load they carry. A cart's load is weighed as a player's inventory, containers with what they hold. With TFC Astikor Carts these are the supply cart and the hand cart, up to astikor_supply_cart_max_load and astikor_hand_cart_max_load, and that mod's own debuffs for their cargo stop; its animal cart keeps that mod's thresholds. Off, TFC Astikor Carts weighs and burdens as it does by itself. Default: true")
     .define("enable_cart_limits", true);
 
+  private static final ModConfigSpec.IntValue ASTIKOR_SUPPLY_CART_MAX_LOAD = SERVER_BUILDER
+    .comment("With TFC Astikor Carts: the weight a supply cart can hold before the cart is overloaded, counted as in a player's inventory. It is exhausting from exhausted_weight_percentage of this. Default: 10000")
+    .defineInRange("astikor_supply_cart_max_load", 10000, 1, Integer.MAX_VALUE);
+
+  private static final ModConfigSpec.IntValue ASTIKOR_HAND_CART_MAX_LOAD = SERVER_BUILDER
+    .comment("With TFC Astikor Carts: the weight a hand cart can hold before the cart is overloaded, counted as in a player's inventory. It is exhausting from exhausted_weight_percentage of this. Default: 5000")
+    .defineInRange("astikor_hand_cart_max_load", 5000, 1, Integer.MAX_VALUE);
+
   private static final ModConfigSpec.IntValue PULL_CART_MAX_LOAD = SERVER_BUILDER
-    .comment("With Pull Cart: the weight a cart's chest can hold before the cart is overloaded, counted as in a player's inventory. It is exhausting from exhausted_weight_percentage of this. Default: 4000")
-    .defineInRange("pull_cart_max_load", 4000, 1, Integer.MAX_VALUE);
+    .comment("With Pull Cart: the weight a cart's chest can hold before the cart is overloaded, counted as in a player's inventory. It is exhausting from exhausted_weight_percentage of this. Default: 5000")
+    .defineInRange("pull_cart_max_load", 5000, 1, Integer.MAX_VALUE);
 
   private static final ModConfigSpec.BooleanValue COUNT_CART_RIDERS = SERVER_BUILDER
-    .comment("With TFC Astikor Carts: whether a player sitting on a cart adds to its load, their body weighed as that mod weighs a passenger and what they carry weighed as cargo. Such a player also sees the cart bar. Default: false")
+    .comment("With TFC Astikor Carts: whether a player sitting on a cart adds to its load. On a supply or hand cart under enable_cart_limits that is the weight they carry, as their own bar shows it; on an animal cart, their body weighed as that mod weighs a passenger and what they carry weighed as cargo. Such a player also sees the cart bar. Default: false")
     .define("count_cart_riders", false);
 
   private static final ModConfigSpec.EnumValue<Size> LARGE_ITEM_SIZE = SERVER_BUILDER
@@ -243,6 +251,8 @@ public class Config {
   public static boolean enableWeightDebuffs;
   public static boolean enableFoodExhaustion;
   public static boolean enableCartLimits;
+  public static int astikorSupplyCartMaxLoad;
+  public static int astikorHandCartMaxLoad;
   public static int pullCartMaxLoad;
   public static boolean countCartRiders;
   public static Size largeItemSize = Size.LARGE;
@@ -281,6 +291,8 @@ public class Config {
       enableWeightDebuffs = ENABLE_WEIGHT_DEBUFFS.get();
       enableFoodExhaustion = ENABLE_FOOD_EXHAUSTION.get();
       enableCartLimits = ENABLE_CART_LIMITS.get();
+      astikorSupplyCartMaxLoad = ASTIKOR_SUPPLY_CART_MAX_LOAD.get();
+      astikorHandCartMaxLoad = ASTIKOR_HAND_CART_MAX_LOAD.get();
       pullCartMaxLoad = PULL_CART_MAX_LOAD.get();
       countCartRiders = COUNT_CART_RIDERS.get();
       largeItemSize = LARGE_ITEM_SIZE.get();

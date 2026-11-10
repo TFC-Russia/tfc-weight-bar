@@ -165,9 +165,27 @@ public class WeightBarHelpers {
   }
 
   /**
-   * Burdens a player who pulls an overloaded Pull Cart cart on foot. TFC Astikor Carts does that itself.
+   * Whether this mod weighs the cargo of a TFC Astikor Carts cart with an inventory, and limits and burdens by it, so
+   * that the cart's own sum must burden no one. TFCAbstractDrawnInventoryEntityMixin asks this as the cart ticks, on
+   * both sides; the client has the server's config.
    */
-  public static void burdenWithPullCart(final Player player) {
+  public static boolean weighsAstikorCargo() {
+    return Config.enableWeightCalculations && Config.enableCartLimits && isAstikorCartsUsable();
+  }
+
+  /**
+   * Burdens a player who pulls an overloaded cart on foot: a TFC Astikor Carts supply or hand cart, whose own debuffs
+   * for its cargo are off while this mod weighs it, or a Pull Cart cart, which has none.
+   */
+  public static void burdenWithCarts(final Player player) {
+    if (weighsAstikorCargo()) {
+      try {
+        AstikorCartsCompat.burden(player);
+      } catch (LinkageError | RuntimeException e) {
+        turnAstikorCartsOff(e);
+      }
+    }
+
     if (isPullCartUsable()) {
       try {
         PullCartCompat.burden(player);

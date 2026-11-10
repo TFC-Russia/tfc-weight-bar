@@ -5,8 +5,9 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 
 /**
- * The load of the cart a player pulls, as TFC Astikor Carts counts it, and the loads past which that mod makes the
- * player Exhausted and Overburdened. The cart's own scale, apart from the player's weight.
+ * The load of the cart a player pulls, or draws with the animal they ride, and the loads past which the player is
+ * Exhausted and Overburdened. A cart this mod limits is weighed as a player's inventory; a TFC Astikor Carts cart it
+ * does not, on that mod's own scale. Either way apart from the player's weight.
  *
  * <p>A cart can also be overloaded by how many of its slots hold large items, whatever its load: largeItemSlots against
  * maxLargeItemSlots, which is 0 when the server sets no such limit.
