@@ -28,6 +28,7 @@ import net.dries007.tfc.common.component.size.ItemSizeManager;
 import net.dries007.tfc.common.component.size.Size;
 import net.dries007.tfc.common.component.size.Weight;
 import net.dries007.tfc.common.effect.TFCEffects;
+import com.koenigstag.tfc_weight_bar.mixin.AbstractHorseAccessor;
 
 import javax.annotation.Nullable;
 
@@ -138,6 +139,20 @@ public class WeightBarHelpers {
     }
 
     return stacks;
+  }
+
+  /**
+   * What this animal carries in an inventory of its own, which it hauls along with a cart it pulls or rides in: a
+   * horse's saddle and armour, the chest of a donkey, mule or llama. Null for any other entity, players included, whose
+   * weight is their own bar's, and with count_animal_inventories off.
+   */
+  @Nullable
+  public static Container getAnimalInventory(@Nullable final Entity entity) {
+    if (Config.countAnimalInventories && entity instanceof AbstractHorse
+        && entity instanceof AbstractHorseAccessor horse) {
+      return horse.tfc_weight_bar$getInventory();
+    }
+    return null;
   }
 
   /**

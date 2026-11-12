@@ -222,6 +222,10 @@ public class Config {
     .comment("With TFC Astikor Carts: whether a player sitting on a cart adds to its load. On a supply or hand cart under enable_cart_limits that is the weight they carry, as their own bar shows it; on an animal cart, their body weighed as that mod weighs a passenger and what they carry weighed as cargo. Such a player also sees the cart bar. Default: false")
     .define("count_cart_riders", false);
 
+  private static final ModConfigSpec.BooleanValue COUNT_ANIMAL_INVENTORIES = SERVER_BUILDER
+    .comment("Whether what an animal carries in an inventory of its own adds to a load: a horse's saddle and armour, the chest of a donkey, mule or llama with what it holds. It adds to the load of the TFC Astikor Carts cart the animal pulls or rides in, weighed as a player's inventory on a supply or hand cart under enable_cart_limits, as that mod weighs cargo otherwise. Default: true")
+    .define("count_animal_inventories", true);
+
   private static final ModConfigSpec.EnumValue<Size> LARGE_ITEM_SIZE = SERVER_BUILDER
     .comment("The smallest TFC size of item that counts as large for astikor_max_large_item_slots and pull_cart_max_large_item_slots. Default: LARGE")
     .defineEnum("large_item_size", Size.LARGE);
@@ -278,6 +282,7 @@ public class Config {
   public static int astikorHandCartMaxLoad;
   public static int pullCartMaxLoad;
   public static boolean countCartRiders;
+  public static boolean countAnimalInventories;
   public static Size largeItemSize = Size.LARGE;
   public static int astikorMaxLargeItemSlots;
   public static int pullCartMaxLargeItemSlots;
@@ -320,6 +325,7 @@ public class Config {
       astikorHandCartMaxLoad = ASTIKOR_HAND_CART_MAX_LOAD.get();
       pullCartMaxLoad = PULL_CART_MAX_LOAD.get();
       countCartRiders = COUNT_CART_RIDERS.get();
+      countAnimalInventories = COUNT_ANIMAL_INVENTORIES.get();
       largeItemSize = LARGE_ITEM_SIZE.get();
       astikorMaxLargeItemSlots = ASTIKOR_MAX_LARGE_ITEM_SLOTS.get();
       pullCartMaxLargeItemSlots = PULL_CART_MAX_LARGE_ITEM_SLOTS.get();

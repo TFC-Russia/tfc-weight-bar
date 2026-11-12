@@ -87,8 +87,9 @@ Firmaciv vessels on 1.20.1 `enable_vessel_limits`, `overloaded_vessel` and a lim
 and for carts
 `enable_cart_limits`, `overloaded_cart` (let go of the cart or stand still with
 it), `astikor_supply_cart_max_load`, `astikor_hand_cart_max_load` (the hand cart
-is on 1.21.1), `pull_cart_max_load`, `count_cart_riders` and the limits on
-slots of large items. It can also settle the HUD options
+is on 1.21.1), `pull_cart_max_load`, `count_cart_riders`, `count_animal_inventories`
+(the pack of a horse, donkey, mule or llama adds to the load of its cart, and on 1.20.1 of its vessel)
+and the limits on slots of large items. It can also settle the HUD options
 below for every player on the server (`force_weight_display`, `force_bar_position`,
 `force_bar_numbers`, `force_cart_bar`); by default each player picks their own.
 

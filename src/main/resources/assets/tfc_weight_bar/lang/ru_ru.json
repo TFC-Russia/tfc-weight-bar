@@ -63,6 +63,8 @@
   "tfc_weight_bar.configuration.pull_cart_max_load.tooltip": "С Pull Cart: сколько весит содержимое сундука повозки, прежде чем она считается перегруженной. Считается как в инвентаре игрока.",
   "tfc_weight_bar.configuration.count_cart_riders": "Учитывать седоков повозки",
   "tfc_weight_bar.configuration.count_cart_riders.tooltip": "С TFC Astikor Carts: игрок, сидящий на повозке, добавляется к её грузу: на телеге снабжения и ручной тележке — вес того, что он несёт, как на его собственной полосе; на повозке для животных — тело по весу пассажира в том моде и то, что он несёт, как груз. Такой игрок тоже видит полосу повозки.",
+  "tfc_weight_bar.configuration.count_animal_inventories": "Учитывать инвентарь животных",
+  "tfc_weight_bar.configuration.count_animal_inventories.tooltip": "То, что животное несёт в собственном инвентаре — седло и броня лошади, сундук осла, мула или ламы вместе с содержимым, — добавляется к грузу повозки TFC Astikor Carts, которую оно тянет или в которой едет.",
   "tfc_weight_bar.configuration.large_item_size": "Размер крупного предмета",
   "tfc_weight_bar.configuration.large_item_size.tooltip": "Наименьший размер предмета по TFC, который считается крупным для пределов по слотам ниже.",
   "tfc_weight_bar.configuration.astikor_max_large_item_slots": "Слоты крупных предметов TFC Astikor Carts",

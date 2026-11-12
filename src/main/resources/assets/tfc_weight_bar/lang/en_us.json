@@ -50,6 +50,8 @@
   "tfc_weight_bar.configuration.pull_cart_max_load.tooltip": "With Pull Cart: the weight a cart's chest can hold before the cart is overloaded, counted as in a player's inventory.",
   "tfc_weight_bar.configuration.count_cart_riders": "Count cart riders",
   "tfc_weight_bar.configuration.count_cart_riders.tooltip": "With TFC Astikor Carts: a player sitting on a cart adds to its load: on a supply or hand cart the weight they carry, as their own bar shows it; on an animal cart their body and what they carry, as that mod weighs a passenger and cargo. Such a player also sees the cart bar.",
+  "tfc_weight_bar.configuration.count_animal_inventories": "Count animal inventories",
+  "tfc_weight_bar.configuration.count_animal_inventories.tooltip": "What an animal carries in an inventory of its own, a horse's saddle and armour, the chest of a donkey, mule or llama with what it holds, adds to the load of the TFC Astikor Carts cart it pulls or rides in.",
   "tfc_weight_bar.configuration.large_item_size": "Large item size",
   "tfc_weight_bar.configuration.large_item_size.tooltip": "The smallest TFC size of item that counts as large for the slot limits below.",
   "tfc_weight_bar.configuration.astikor_max_large_item_slots": "TFC Astikor Carts large item slots",

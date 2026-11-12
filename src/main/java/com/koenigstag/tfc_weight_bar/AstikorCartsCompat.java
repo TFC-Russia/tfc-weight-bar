@@ -2,6 +2,7 @@ package com.koenigstag.tfc_weight_bar;
 
 import net.dries007.tfc.common.component.size.IItemSize;
 import net.dries007.tfc.common.component.size.ItemSizeManager;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -14,6 +15,8 @@ import tfcastikorcarts.config.TFCAstikorCartsConfig;
 import tfcastikorcarts.util.AstikorHelpers;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Everything that touches TFC Astikor Carts. It is optional, so call this only through {@link WeightBarHelpers}: loading
@@ -100,26 +103,73 @@ public final class AstikorCartsCompat {
   }
 
   // A cart with an inventory under enable_cart_limits: what it holds weighed as a player's inventory, containers with
-  // what they hold, and its riders' own weight when count_cart_riders adds them, against its limit; and its slots that
-  // hold large items. Otherwise the same sums the cart weighs against its thresholds: the cargo of a cart with an
-  // inventory, or else its passengers, either one a hundredth of its mass in kilograms and never under 1.
+  // what they hold, its riders' own weight when count_cart_riders adds them, and its animals' packs when
+  // count_animal_inventories does, against its limit; and its slots that hold large items. Otherwise the same sums the
+  // cart weighs against its thresholds: the cargo of a cart with an inventory, or else its passengers, either one a
+  // hundredth of its mass in kilograms and never under 1, with the riders and the packs added as cargo.
   private static CartLoad getLoad(final TFCAbstractDrawnEntity cart) {
     if (cart instanceof TFCAbstractDrawnInventoryEntity inventoryCart) {
       if (Config.enableCartLimits) {
         final int maxLoad = getMaxLoad(inventoryCart);
 
         return new CartLoad(
-            WeightBarHelpers.calculateContainerWeight(inventoryCart, cart.level().registryAccess()) + weighRiders(cart),
+            WeightBarHelpers.calculateContainerWeight(inventoryCart, cart.level().registryAccess()) + weighRiders(cart)
+                + weighAnimalPacks(cart),
             (float) (maxLoad * Config.getExhaustedWeightCoefficient()), maxLoad,
             WeightBarHelpers.countLargeItemSlots(inventoryCart), Config.astikorMaxLargeItemSlots);
       }
 
-      return new CartLoad(getHundredth(inventoryCart.countOverburdenedCargo() + countRiders(cart, false)),
+      return new CartLoad(
+          getHundredth(inventoryCart.countOverburdenedCargo() + countRiders(cart, false) + countAnimalPacks(cart)),
           getExhaustedLoad(), getOverburdenedLoad());
     }
 
-    return new CartLoad(getHundredth(cart.countOverburdened() + countRiders(cart, true)), getExhaustedLoad(),
-        getOverburdenedLoad());
+    return new CartLoad(getHundredth(cart.countOverburdened() + countRiders(cart, true) + countAnimalPacks(cart)),
+        getExhaustedLoad(), getOverburdenedLoad());
+  }
+
+  /**
+   * What the animal pulling this cart and the animals riding in it carry in inventories of their own, weighed as a
+   * player's inventory: an animal hauls its pack along with the cart. 0 unless count_animal_inventories is on.
+   */
+  private static int weighAnimalPacks(final TFCAbstractDrawnEntity cart) {
+    int weight = 0;
+    for (final Container pack : getAnimalPacks(cart)) {
+      weight += WeightBarHelpers.calculateContainerWeight(pack, cart.level().registryAccess());
+    }
+    return weight;
+  }
+
+  /**
+   * The mass of the same packs as weighAnimalPacks, each stack weighed as the cart weighs cargo.
+   */
+  private static double countAnimalPacks(final TFCAbstractDrawnEntity cart) {
+    double mass = 0;
+    for (final Container pack : getAnimalPacks(cart)) {
+      for (int i = 0; i < pack.getContainerSize(); i++) {
+        final ItemStack stack = pack.getItem(i);
+        if (!stack.isEmpty()) {
+          final IItemSize size = ItemSizeManager.get(stack);
+          mass += AstikorHelpers.getEstimatedMassKg(stack, size.getSize(stack), size.getWeight(stack));
+        }
+      }
+    }
+    return mass;
+  }
+
+  private static List<Container> getAnimalPacks(final TFCAbstractDrawnEntity cart) {
+    final List<Container> packs = new ArrayList<>();
+    final Container pullerPack = WeightBarHelpers.getAnimalInventory(cart.getPulling());
+    if (pullerPack != null) {
+      packs.add(pullerPack);
+    }
+    for (final Entity passenger : cart.getPassengers()) {
+      final Container pack = WeightBarHelpers.getAnimalInventory(passenger);
+      if (pack != null) {
+        packs.add(pack);
+      }
+    }
+    return packs;
   }
 
   // The hand cart has a limit of its own; the supply cart's covers it and any other cart with cargo
