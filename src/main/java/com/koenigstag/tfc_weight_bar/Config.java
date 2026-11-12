@@ -180,7 +180,7 @@ public class Config {
     .define("stop_overburdened_boats", true);
 
   private static final ForgeConfigSpec.BooleanValue ENABLE_VESSEL_LIMITS = SERVER_BUILDER
-    .comment("With AlekiShips, and Firmaciv's vessels built on it: whether a vessel has a limit of weight. Its load is what its compartments hold, chests, barrels and vessels with what they hold, and the weight the players aboard carry, all weighed as a player's inventory. The player at the helm sees it as the cart bar, and overloaded_vessel says how the load holds the vessel back. Default: true")
+    .comment("With AlekiShips, and Firmaciv's vessels built on it: whether a vessel has a limit of weight. Its load is what its compartments hold, chests, barrels and vessels with what they hold, the weight the players aboard carry, and the packs of the animals aboard under count_animal_inventories, all weighed as a player's inventory. The player at the helm sees it as the cart bar, and overloaded_vessel says how the load holds the vessel back. Default: true")
     .define("enable_vessel_limits", true);
 
   private static final ForgeConfigSpec.EnumValue<OverloadedVessel> OVERLOADED_VESSEL = SERVER_BUILDER
@@ -218,6 +218,10 @@ public class Config {
   private static final ForgeConfigSpec.BooleanValue COUNT_CART_RIDERS = SERVER_BUILDER
     .comment("With TFC Astikor Carts: whether a player sitting on a cart adds to its load. On a supply cart under enable_cart_limits that is the weight they carry, as their own bar shows it; on an animal cart, from 1.1.9, their body weighed as that mod weighs a passenger and what they carry weighed as cargo. Such a player also sees the cart bar. Default: false")
     .define("count_cart_riders", false);
+
+  private static final ForgeConfigSpec.BooleanValue COUNT_ANIMAL_INVENTORIES = SERVER_BUILDER
+    .comment("Whether what an animal carries in an inventory of its own adds to a load: a horse's saddle and armour, the chest of a donkey, mule or llama with what it holds. It adds to the load of the TFC Astikor Carts cart the animal pulls or rides in, weighed as a player's inventory on a supply cart under enable_cart_limits, as that mod weighs cargo otherwise; and to the load of the AlekiShips vessel it is aboard. Default: true")
+    .define("count_animal_inventories", true);
 
   private static final ForgeConfigSpec.EnumValue<Size> LARGE_ITEM_SIZE = SERVER_BUILDER
     .comment("The smallest TFC size of item that counts as large for astikor_max_large_item_slots and pull_cart_max_large_item_slots. Default: LARGE")
@@ -280,6 +284,7 @@ public class Config {
   public static int astikorSupplyCartMaxLoad;
   public static int pullCartMaxLoad;
   public static boolean countCartRiders;
+  public static boolean countAnimalInventories;
   public static Size largeItemSize = Size.LARGE;
   public static int astikorMaxLargeItemSlots;
   public static int pullCartMaxLargeItemSlots;
@@ -327,6 +332,7 @@ public class Config {
       astikorSupplyCartMaxLoad = ASTIKOR_SUPPLY_CART_MAX_LOAD.get();
       pullCartMaxLoad = PULL_CART_MAX_LOAD.get();
       countCartRiders = COUNT_CART_RIDERS.get();
+      countAnimalInventories = COUNT_ANIMAL_INVENTORIES.get();
       largeItemSize = LARGE_ITEM_SIZE.get();
       astikorMaxLargeItemSlots = ASTIKOR_MAX_LARGE_ITEM_SLOTS.get();
       pullCartMaxLargeItemSlots = PULL_CART_MAX_LARGE_ITEM_SLOTS.get();

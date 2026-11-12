@@ -2,9 +2,12 @@ package com.koenigstag.tfc_weight_bar;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 import net.dries007.tfc.common.capabilities.size.IItemSize;
 import net.dries007.tfc.common.capabilities.size.ItemSizeManager;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -173,21 +176,23 @@ public final class AstikorCartsCompat {
     }
   }
 
-  // Under enable_cart_limits, what the cart holds weighed as a player's inventory, containers with what they hold, and
-  // its riders' own weight when count_cart_riders adds them, up to astikor_supply_cart_max_load; and its slots that hold
-  // large items. Otherwise the same sums the cart weighs against its thresholds. Every version's supply cart is a
-  // Container.
+  // Under enable_cart_limits, what the cart holds weighed as a player's inventory, containers with what they hold, its
+  // riders' own weight when count_cart_riders adds them, and its animals' packs when count_animal_inventories does, up
+  // to astikor_supply_cart_max_load; and its slots that hold large items. Otherwise the same sums the cart weighs against
+  // its thresholds. Every version's supply cart is a Container.
   private static CartLoad getLoad(final TFCSupplyCartEntity supplyCart) {
     if (Config.enableCartLimits) {
       final int maxLoad = Config.astikorSupplyCartMaxLoad;
 
-      return new CartLoad(WeightBarHelpers.calculateContainerWeight(supplyCart) + weighRiders(supplyCart),
+      return new CartLoad(WeightBarHelpers.calculateContainerWeight(supplyCart) + weighRiders(supplyCart)
+          + weighAnimalPacks(supplyCart, supplyCart.getPulling()),
           (float) (maxLoad * Config.getExhaustedWeightCoefficient()), maxLoad,
           WeightBarHelpers.countLargeItemSlots(supplyCart), Config.astikorMaxLargeItemSlots);
     }
 
     return new CartLoad(LEGACY_SUPPLY_CART_LOAD != null ? getLegacyLoad(supplyCart)
-        : getHundredth(supplyCart.countOverburdenedCargo() + countRiders(supplyCart)), getExhaustedLoad(),
+        : getHundredth(supplyCart.countOverburdenedCargo() + countRiders(supplyCart)
+            + countAnimalPacks(supplyCart, supplyCart.getPulling())), getExhaustedLoad(),
         getOverburdenedLoad());
   }
 
@@ -212,8 +217,53 @@ public final class AstikorCartsCompat {
     return LEGACY_SUPPLY_CART_LOAD != null
         ? new CartLoad(animalCart.countOverburdened(), LEGACY_ANIMAL_CART_EXHAUSTED_LOAD,
             LEGACY_ANIMAL_CART_OVERBURDENED_LOAD)
-        : new CartLoad(getHundredth(animalCart.countOverburdened() + countRiders(animalCart)), getExhaustedLoad(),
-            getOverburdenedLoad());
+        : new CartLoad(getHundredth(animalCart.countOverburdened() + countRiders(animalCart)
+            + countAnimalPacks(animalCart, animalCart.getPulling())), getExhaustedLoad(), getOverburdenedLoad());
+  }
+
+  /**
+   * What the animal pulling this cart and the animals riding in it carry in inventories of their own, weighed as a
+   * player's inventory: an animal hauls its pack along with the cart. 0 unless count_animal_inventories is on.
+   */
+  private static int weighAnimalPacks(final Entity cart, @Nullable final Entity puller) {
+    int weight = 0;
+    for (final Container pack : getAnimalPacks(cart, puller)) {
+      weight += WeightBarHelpers.calculateContainerWeight(pack);
+    }
+    return weight;
+  }
+
+  /**
+   * The mass of the same packs as weighAnimalPacks, each stack weighed as the cart weighs cargo. Only 1.1.9 and later
+   * have these sums, so up to 1.1.8 the packs never count.
+   */
+  private static double countAnimalPacks(final Entity cart, @Nullable final Entity puller) {
+    double mass = 0;
+    for (final Container pack : getAnimalPacks(cart, puller)) {
+      for (int i = 0; i < pack.getContainerSize(); i++) {
+        final ItemStack stack = pack.getItem(i);
+        if (!stack.isEmpty()) {
+          final IItemSize size = ItemSizeManager.get(stack);
+          mass += AstikorHelpers.getEstimatedMassKg(stack, size.getSize(stack), size.getWeight(stack));
+        }
+      }
+    }
+    return mass;
+  }
+
+  private static List<Container> getAnimalPacks(final Entity cart, @Nullable final Entity puller) {
+    final List<Container> packs = new ArrayList<>();
+    final Container pullerPack = WeightBarHelpers.getAnimalInventory(puller);
+    if (pullerPack != null) {
+      packs.add(pullerPack);
+    }
+    for (final Entity passenger : cart.getPassengers()) {
+      final Container pack = WeightBarHelpers.getAnimalInventory(passenger);
+      if (pack != null) {
+        packs.add(pack);
+      }
+    }
+    return packs;
   }
 
   /**

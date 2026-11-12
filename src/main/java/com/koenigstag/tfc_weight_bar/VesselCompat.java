@@ -18,8 +18,9 @@ import java.util.WeakHashMap;
  * through {@link WeightBarHelpers}: loading this class without it fails. Firmaciv's kayak and canoe are told apart by
  * class name, so Firmaciv itself is not needed.
  *
- * <p>A vessel's load is what its compartments hold, weighed as a player's inventory, containers with what they hold, and
- * the weight the players aboard carry. Each kind of vessel has a limit of its own, and an unknown kind has none.
+ * <p>A vessel's load is what its compartments hold, weighed as a player's inventory, containers with what they hold, the
+ * weight the players aboard carry, and under count_animal_inventories the packs of the animals aboard. Each kind of
+ * vessel has a limit of its own, and an unknown kind has none.
  */
 public final class VesselCompat {
   private static final String KAYAK = "com.alekiponi.firmaciv.common.entity.vehicle.KayakEntity";
@@ -112,6 +113,10 @@ public final class VesselCompat {
     }
     for (final Player aboard : vessel.collectPlayerPassengers()) {
       weight += WeightBarHelpers.calculatePlayerFullWeight(aboard);
+    }
+    // An animal sits in a compartment, as a passenger of a passenger of the vessel
+    for (final Entity aboard : vessel.getIndirectPassengers()) {
+      weight += WeightBarHelpers.calculateContainerWeight(WeightBarHelpers.getAnimalInventory(aboard));
     }
 
     return new CartLoad(weight, (float) (maxLoad * Config.getExhaustedWeightCoefficient()), maxLoad);
