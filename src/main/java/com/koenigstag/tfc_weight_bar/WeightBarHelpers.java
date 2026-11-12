@@ -7,6 +7,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
@@ -48,9 +49,20 @@ public class WeightBarHelpers {
   // features, not the server
   private static boolean astikorCartsBroken = false;
   private static boolean pullCartBroken = false;
+  private static boolean alekiShipsBroken = false;
 
   private static boolean isAstikorCartsUsable() {
     return !astikorCartsBroken && ModList.get().isLoaded("tfcastikorcarts");
+  }
+
+  private static boolean areVesselLimitsUsable() {
+    return Config.enableWeightCalculations && Config.enableVesselLimits && !alekiShipsBroken
+        && ModList.get().isLoaded("alekiships");
+  }
+
+  private static void turnAlekiShipsOff(final Throwable cause) {
+    alekiShipsBroken = true;
+    Constants.LOGGER.error("Cannot read the vessels of AlekiShips, so their bar and limit stay off", cause);
   }
 
   private static boolean isPullCartUsable() {
@@ -71,10 +83,22 @@ public class WeightBarHelpers {
    * The load of the cart the player pulls, or the animal they ride pulls, or null when there is none. Each mod allows one
    * cart per player only among its own, so a player can pull one of each, and then this is the one closer to its limit.
    * Pull Cart has no load of its own, so with enable_cart_limits off it has none here either. The carts' classes are only
-   * reached through AstikorCartsCompat and PullCartCompat, behind these checks.
+   * reached through AstikorCartsCompat and PullCartCompat, behind these checks. A player at the helm of a vessel with a
+   * limit gets its load instead, under enable_vessel_limits, since they pull no cart from there.
    */
   @Nullable
   public static CartLoad getCartLoad(final Player player) {
+    if (areVesselLimitsUsable()) {
+      try {
+        final CartLoad vesselLoad = VesselCompat.getHelmLoad(player);
+        if (vesselLoad != null) {
+          return vesselLoad;
+        }
+      } catch (LinkageError | RuntimeException e) {
+        turnAlekiShipsOff(e);
+      }
+    }
+
     CartLoad astikorLoad = null;
     CartLoad pullCartLoad = null;
 
@@ -139,27 +163,51 @@ public class WeightBarHelpers {
   }
 
   /**
-   * Makes animals near the players in this level let go of the carts they cannot pull.
+   * Deals with the animals near the players in this level that pull carts loaded past their limits, as
+   * overloaded_cart says, and gives their speed back to the animals held still that no longer do. Runs every tick,
+   * limits on or off, so that turning them off lets every held animal go.
    */
-  public static void refuseOverloadedCarts(final ServerLevel level) {
-    if (isAstikorCartsUsable()) {
-      try {
-        for (final ServerPlayer player : level.players()) {
-          AstikorCartsCompat.refuseOverloadedCarts(player);
+  public static void tickCarts(final ServerLevel level) {
+    CartHolds.beginTick();
+
+    if (Config.enableWeightCalculations && Config.enableCartLimits) {
+      if (isAstikorCartsUsable()) {
+        try {
+          for (final ServerPlayer player : level.players()) {
+            AstikorCartsCompat.checkOverloadedCarts(player);
+          }
+        } catch (LinkageError | RuntimeException e) {
+          turnAstikorCartsOff(e);
         }
-      } catch (LinkageError | RuntimeException e) {
-        turnAstikorCartsOff(e);
+      }
+
+      if (isPullCartUsable()) {
+        try {
+          for (final ServerPlayer player : level.players()) {
+            PullCartCompat.checkOverloadedCart(player);
+          }
+        } catch (LinkageError | RuntimeException e) {
+          turnPullCartOff(e);
+        }
       }
     }
 
-    if (isPullCartUsable()) {
-      try {
-        for (final ServerPlayer player : level.players()) {
-          PullCartCompat.refuseOverloadedCart(player);
-        }
-      } catch (LinkageError | RuntimeException e) {
-        turnPullCartOff(e);
-      }
+    CartHolds.endTick(level);
+  }
+
+  /**
+   * An animal pulls a cart loaded past its limit. With overloaded_cart at STOP it stands still with the cart; else, or
+   * when it is no animal, letGo makes it let go of the cart. While a player loads the cart with no one on the animal,
+   * it waits until the screen is closed, since the screen covers the middle of the message.
+   */
+  public static void onCartOverloaded(final Entity animal, final Entity cart, final CartLoad load,
+      final boolean beingLoaded, final Runnable letGo) {
+    if (Config.overloadedCart == Config.OverloadedCart.STOP && animal instanceof LivingEntity living
+        && !(animal instanceof Player)) {
+      CartHolds.hold(living, cart, load, beingLoaded);
+    } else if (!beingLoaded) {
+      letGo.run();
+      announceCartOverloaded(animal, cart, load, true);
     }
   }
 
@@ -195,23 +243,29 @@ public class WeightBarHelpers {
   }
 
   /**
-   * An animal just let go of a cart: it rears and the players around read why, over the hotbar and with the numbers,
-   * since the cart bar goes with the cart.
+   * An animal just let go of a cart, or came to a stop with it: it rears and the players around read why, over the
+   * hotbar and with the numbers, since the cart bar shows only to whoever pulls the cart. Letting go also sounds as a
+   * lead that breaks.
    */
-  public static void announceCartRefused(final Entity animal, final Entity cart, final CartLoad load) {
+  public static void announceCartOverloaded(final Entity animal, final Entity cart, final CartLoad load,
+      final boolean letGo) {
     if (animal instanceof AbstractHorse horse) {
       horse.makeMad();
       // The smoke of a horse that will not have it, which TFC also sends when a horse kicks a rider off
       cart.level().broadcastEntityEvent(horse, (byte) 6);
     }
 
-    cart.level().playSound(null, cart.getX(), cart.getY(), cart.getZ(), SoundEvents.LEASH_KNOT_BREAK, SoundSource.NEUTRAL, 1f, 1f);
+    if (letGo) {
+      cart.level().playSound(null, cart.getX(), cart.getY(), cart.getZ(), SoundEvents.LEASH_KNOT_BREAK,
+          SoundSource.NEUTRAL, 1f, 1f);
+    }
 
+    final String key = Constants.MOD_ID + (letGo ? ".message.cart_refused" : ".message.cart_stopped");
     final Component message = load.load() <= load.overburdenedLoad() && load.hasTooManyLargeItems()
-        ? Component.translatable(Constants.MOD_ID + ".message.cart_refused_large_items", animal.getDisplayName(),
-            load.largeItemSlots(), load.maxLargeItemSlots())
-        : Component.translatable(Constants.MOD_ID + ".message.cart_refused", animal.getDisplayName(),
-            Math.round(load.load()), Math.round(load.overburdenedLoad()));
+        ? Component.translatable(key + "_large_items", animal.getDisplayName(), load.largeItemSlots(),
+            load.maxLargeItemSlots())
+        : Component.translatable(key, animal.getDisplayName(), Math.round(load.load()),
+            Math.round(load.overburdenedLoad()));
 
     for (final Player near : cart.level().getEntitiesOfClass(Player.class, cart.getBoundingBox().inflate(CART_MESSAGE_RADIUS))) {
       near.displayClientMessage(message, true);
@@ -219,6 +273,93 @@ public class WeightBarHelpers {
   }
 
   private static final double CART_MESSAGE_RADIUS = 8;
+
+  // How often a player who cannot row is told why, while they keep trying
+  private static final long TOO_HEAVY_TO_ROW_MESSAGE_TICKS = 40;
+  private static long tooHeavyToRowToldAt = Long.MIN_VALUE;
+
+  /**
+   * Whether the player steering this boat is too heavy to row it: Overburdened, by weight or by TFC's huge and very
+   * heavy items, under stop_overburdened_boats. BoatMixin asks this where the boat is steered, on that player's client,
+   * which has the server's config and its own player's effects.
+   */
+  public static boolean isTooHeavyToRow(final Entity boat) {
+    return Config.enableWeightCalculations && Config.stopOverburdenedBoats
+        && boat.getControllingPassenger() instanceof Player pilot && pilot.hasEffect(TFCEffects.OVERBURDENED.get());
+  }
+
+  /**
+   * Tells the player who tries to row while too heavy why the boat does not move, over the hotbar, every two seconds
+   * while they keep trying.
+   */
+  public static void tellTooHeavyToRow(final Entity boat) {
+    tellHelm(boat, Component.translatable(Constants.MOD_ID + ".message.too_heavy_to_row"));
+  }
+
+  private static void tellHelm(final Entity boat, final Component message) {
+    final long now = boat.level().getGameTime();
+
+    if (boat.getControllingPassenger() instanceof Player pilot
+        && (now < tooHeavyToRowToldAt || now - tooHeavyToRowToldAt >= TOO_HEAVY_TO_ROW_MESSAGE_TICKS)) {
+      tooHeavyToRowToldAt = now;
+      pilot.displayClientMessage(message, true);
+    }
+  }
+
+  /**
+   * How much of what its paddles or oars give an AlekiShips vessel keeps, 1 for all of it: none while the player at the
+   * helm is too heavy to row, else as its load allows under enable_vessel_limits. VesselPaddleMixin asks this on both
+   * sides, as the vessel moves on both; the player at the helm reads why it does not move while they try.
+   */
+  public static float getPaddleFactor(final Entity vessel) {
+    if (isTooHeavyToRow(vessel)) {
+      tellHelmWhyStill(vessel, Component.translatable(Constants.MOD_ID + ".message.too_heavy_to_row"));
+      return 0;
+    }
+    return getVesselLoadFactor(vessel);
+  }
+
+  /**
+   * How much of what its sails give an AlekiShips sloop keeps, 1 for all of it, as its load allows under
+   * enable_vessel_limits. A player who is too heavy to row can still sail. SloopSailMixin asks this on both sides.
+   */
+  public static float getSailFactor(final Entity vessel) {
+    return getVesselLoadFactor(vessel);
+  }
+
+  private static float getVesselLoadFactor(final Entity vessel) {
+    if (!areVesselLimitsUsable()) {
+      return 1;
+    }
+
+    try {
+      final float factor = VesselCompat.getLoadFactor(vessel);
+      if (factor <= 0) {
+        final WeightSyncPacket data = vessel.level().isClientSide() ? WeightBarClientData.get() : null;
+        if (data != null && data.cart() != null) {
+          tellHelmWhyStill(vessel, Component.translatable(Constants.MOD_ID + ".message.vessel_overloaded",
+              Math.round(data.cart().load()), Math.round(data.cart().overburdenedLoad())));
+        }
+      }
+      return factor;
+    } catch (LinkageError | RuntimeException e) {
+      turnAlekiShipsOff(e);
+      return 1;
+    }
+  }
+
+  // Only on the client of the player at the helm, while they press a key, so the server sends nothing of its own
+  private static void tellHelmWhyStill(final Entity vessel, final Component message) {
+    if (vessel.level().isClientSide() && vessel.isControlledByLocalInstance() && ModList.get().isLoaded("alekiships")) {
+      try {
+        if (VesselCompat.hasHelmInput(vessel)) {
+          tellHelm(vessel, message);
+        }
+      } catch (LinkageError | RuntimeException e) {
+        turnAlekiShipsOff(e);
+      }
+    }
+  }
 
   public static int getMaxInventoryWeight(Player player) {
     Container container = player.getInventory();

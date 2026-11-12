@@ -26,10 +26,10 @@ public final class ForgeServerEventHandler {
   @SubscribeEvent
   public static void onLevelTick(TickEvent.LevelTickEvent event) {
     // Before the level ticks its entities: a cart burdens whoever pulls it as it ticks, and up to TFC Astikor Carts 1.1.8
-    // that includes the rider of its animal, whom a TFC horse then kicks off
-    if (event.phase == TickEvent.Phase.START && Config.enableWeightCalculations
-        && Config.enableCartLimits && event.level instanceof ServerLevel level) {
-      WeightBarHelpers.refuseOverloadedCarts(level);
+    // that includes the rider of its animal, whom a TFC horse then kicks off; and a held animal moves as it ticks.
+    // Every tick, limits on or off, so that held animals get their speed back when they are turned off.
+    if (event.phase == TickEvent.Phase.START && event.level instanceof ServerLevel level) {
+      WeightBarHelpers.tickCarts(level);
     }
   }
 

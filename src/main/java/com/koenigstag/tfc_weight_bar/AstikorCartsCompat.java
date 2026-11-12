@@ -123,12 +123,13 @@ public final class AstikorCartsCompat {
   }
 
   /**
-   * Makes each animal near this player let go of a cart loaded past its limit: a supply cart past
-   * astikor_supply_cart_max_load, an animal cart past what TFC Astikor Carts lets a player pull. Since 1.1.9 that mod has
-   * no limit of its own for an animal, and up to 1.1.8 it burdens the rider, whom a TFC horse then kicks off, with the
-   * cart still hitched.
+   * Hands each animal near this player that pulls a cart loaded past its limit to WeightBarHelpers.onCartOverloaded,
+   * which makes it let go of the cart or stand still with it: a supply cart past astikor_supply_cart_max_load, an animal
+   * cart past what TFC Astikor Carts lets a player pull. Since 1.1.9 that mod has no limit of its own for an animal, and
+   * up to 1.1.8 it burdens the rider of an animal cart's animal, whom a TFC horse then kicks off, with the cart still
+   * hitched.
    */
-  public static void refuseOverloadedCarts(final Player player) {
+  public static void checkOverloadedCarts(final Player player) {
     final AABB area = player.getBoundingBox().inflate(CART_SEARCH_RADIUS);
 
     for (final TFCSupplyCartEntity cart : player.level().getEntitiesOfClass(TFCSupplyCartEntity.class, area,
@@ -136,20 +137,18 @@ public final class AstikorCartsCompat {
       final CartLoad load = getLoad(cart);
       final Entity puller = cart.getPulling();
 
-      if (load.isOverburdened() && !isBeingLoaded(cart, puller)) {
-        cart.setPulling(null);
-        WeightBarHelpers.announceCartRefused(puller, cart, load);
+      if (load.isOverburdened()) {
+        WeightBarHelpers.onCartOverloaded(puller, cart, load, isBeingLoaded(cart, puller),
+            () -> cart.setPulling(null));
       }
     }
 
     for (final TFCAnimalCartEntity cart : player.level().getEntitiesOfClass(TFCAnimalCartEntity.class, area,
         drawn -> isAnimal(drawn.getPulling()))) {
       final CartLoad load = getLoad(cart);
-      final Entity puller = cart.getPulling();
 
       if (load.isOverburdened()) {
-        cart.setPulling(null);
-        WeightBarHelpers.announceCartRefused(puller, cart, load);
+        WeightBarHelpers.onCartOverloaded(cart.getPulling(), cart, load, false, () -> cart.setPulling(null));
       }
     }
   }

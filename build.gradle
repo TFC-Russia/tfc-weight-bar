@@ -111,6 +111,10 @@ dependencies {
     // TFC Astikor Carts, optional, for the cart load bar; in dev it runs too, to try the bar out
     implementation fg.deobf("maven.modrinth:tfc-astikor-carts:$tfc_astikor_carts_version")
     implementation fg.deobf("maven.modrinth:astikorcarts-redux:$astikorcarts_version")
+
+    // AlekiShips, optional, for the vessel bar and limit; in dev it runs too. Firmaciv's own vessels are reached by
+    // class name, so it is not needed here
+    implementation fg.deobf("maven.modrinth:alekiships:$alekiships_version")
 }
 
 tasks.named('processResources', ProcessResources).configure {

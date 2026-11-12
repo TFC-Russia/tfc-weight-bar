@@ -70,6 +70,23 @@ public class Config {
     HEALTH
   }
 
+  /**
+   * What an animal does with a cart loaded past its limit: let go of it, or keep it and stand still.
+   */
+  public enum OverloadedCart {
+    REFUSE,
+    STOP
+  }
+
+  /**
+   * How a vessel's load holds it back: not at all until past its limit, where it gets no thrust, or more the more it is
+   * loaded, down to none at its limit.
+   */
+  public enum OverloadedVessel {
+    STOP,
+    SLOW
+  }
+
   // Client Config: Mods > TFC Weight Bar > Config edits it in game, and edits apply at once
   private static final ForgeConfigSpec.Builder CLIENT_BUILDER = new ForgeConfigSpec.Builder();
 
@@ -158,6 +175,38 @@ public class Config {
     .comment("Whether carts have a limit of weight: an animal lets go of a cart loaded past it, and tells the players around, and a player pulling such a cart on foot is burdened as by a load they carry. A cart's load is weighed as a player's inventory, containers with what they hold. With TFC Astikor Carts this is the supply cart, up to astikor_supply_cart_max_load, and that mod's own debuffs for its cargo stop; its animal cart keeps that mod's thresholds. Off, TFC Astikor Carts weighs and burdens as it does by itself. Default: true")
     .define("enable_cart_limits", true);
 
+  private static final ForgeConfigSpec.BooleanValue STOP_OVERBURDENED_BOATS = SERVER_BUILDER
+    .comment("Whether a player who is Overburdened, by weight or by TFC's huge and very heavy items, cannot row a boat: the boat they steer neither moves nor turns while they are, and drifts as the water takes it. Covers the vanilla boat and the boats built on it, TFC's among them. Default: true")
+    .define("stop_overburdened_boats", true);
+
+  private static final ForgeConfigSpec.BooleanValue ENABLE_VESSEL_LIMITS = SERVER_BUILDER
+    .comment("With AlekiShips, and Firmaciv's vessels built on it: whether a vessel has a limit of weight. Its load is what its compartments hold, chests, barrels and vessels with what they hold, and the weight the players aboard carry, all weighed as a player's inventory. The player at the helm sees it as the cart bar, and overloaded_vessel says how the load holds the vessel back. Default: true")
+    .define("enable_vessel_limits", true);
+
+  private static final ForgeConfigSpec.EnumValue<OverloadedVessel> OVERLOADED_VESSEL = SERVER_BUILDER
+    .comment("Under enable_vessel_limits, how a vessel's load holds it back: STOP rows and sails as ever up to the limit, and past it gets no thrust; SLOW gets less thrust the more it is loaded, as much less as the load is a share of the limit, and none at it. Default: STOP")
+    .defineEnum("overloaded_vessel", OverloadedVessel.STOP);
+
+  private static final ForgeConfigSpec.IntValue VESSEL_KAYAK_MAX_LOAD = SERVER_BUILDER
+    .comment("Under enable_vessel_limits: the weight a Firmaciv kayak can carry. Default: 2000")
+    .defineInRange("vessel_kayak_max_load", 2000, 1, Integer.MAX_VALUE);
+
+  private static final ForgeConfigSpec.IntValue VESSEL_CANOE_MAX_LOAD = SERVER_BUILDER
+    .comment("Under enable_vessel_limits: the weight a Firmaciv canoe can carry. Default: 5000")
+    .defineInRange("vessel_canoe_max_load", 5000, 1, Integer.MAX_VALUE);
+
+  private static final ForgeConfigSpec.IntValue VESSEL_ROWBOAT_MAX_LOAD = SERVER_BUILDER
+    .comment("Under enable_vessel_limits: the weight a rowboat can carry, AlekiShips' or Firmaciv's. Default: 10000")
+    .defineInRange("vessel_rowboat_max_load", 10000, 1, Integer.MAX_VALUE);
+
+  private static final ForgeConfigSpec.IntValue VESSEL_SLOOP_MAX_LOAD = SERVER_BUILDER
+    .comment("Under enable_vessel_limits: the weight a sloop can carry, AlekiShips' or Firmaciv's; its load holds back what its sails pull. Default: 40000")
+    .defineInRange("vessel_sloop_max_load", 40000, 1, Integer.MAX_VALUE);
+
+  private static final ForgeConfigSpec.EnumValue<OverloadedCart> OVERLOADED_CART = SERVER_BUILDER
+    .comment("Under enable_cart_limits, what an animal does with a cart loaded past its limit: REFUSE lets go of the cart, STOP keeps it and stands still, ridden or led, until the cart is under its limit again or taken off it. The server holds the animal, so STOP works whatever mods the players have. Default: REFUSE")
+    .defineEnum("overloaded_cart", OverloadedCart.REFUSE);
+
   private static final ForgeConfigSpec.IntValue ASTIKOR_SUPPLY_CART_MAX_LOAD = SERVER_BUILDER
     .comment("With TFC Astikor Carts: the weight a supply cart can hold before the cart is overloaded, counted as in a player's inventory. It is exhausting from exhausted_weight_percentage of this. Default: 10000")
     .defineInRange("astikor_supply_cart_max_load", 10000, 1, Integer.MAX_VALUE);
@@ -220,6 +269,14 @@ public class Config {
   public static boolean enableWeightDebuffs;
   public static boolean enableFoodExhaustion;
   public static boolean enableCartLimits;
+  public static boolean stopOverburdenedBoats = true;
+  public static boolean enableVesselLimits = true;
+  public static OverloadedVessel overloadedVessel = OverloadedVessel.STOP;
+  public static int vesselKayakMaxLoad;
+  public static int vesselCanoeMaxLoad;
+  public static int vesselRowboatMaxLoad;
+  public static int vesselSloopMaxLoad;
+  public static OverloadedCart overloadedCart = OverloadedCart.REFUSE;
   public static int astikorSupplyCartMaxLoad;
   public static int pullCartMaxLoad;
   public static boolean countCartRiders;
@@ -259,6 +316,14 @@ public class Config {
       enableWeightDebuffs = ENABLE_WEIGHT_DEBUFFS.get();
       enableFoodExhaustion = ENABLE_FOOD_EXHAUSTION.get();
       enableCartLimits = ENABLE_CART_LIMITS.get();
+      stopOverburdenedBoats = STOP_OVERBURDENED_BOATS.get();
+      enableVesselLimits = ENABLE_VESSEL_LIMITS.get();
+      overloadedVessel = OVERLOADED_VESSEL.get();
+      vesselKayakMaxLoad = VESSEL_KAYAK_MAX_LOAD.get();
+      vesselCanoeMaxLoad = VESSEL_CANOE_MAX_LOAD.get();
+      vesselRowboatMaxLoad = VESSEL_ROWBOAT_MAX_LOAD.get();
+      vesselSloopMaxLoad = VESSEL_SLOOP_MAX_LOAD.get();
+      overloadedCart = OVERLOADED_CART.get();
       astikorSupplyCartMaxLoad = ASTIKOR_SUPPLY_CART_MAX_LOAD.get();
       pullCartMaxLoad = PULL_CART_MAX_LOAD.get();
       countCartRiders = COUNT_CART_RIDERS.get();

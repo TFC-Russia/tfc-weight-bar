@@ -5,7 +5,10 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "tfc_weight_bar.refmap.json",
   "mixins": [
-    "TFCSupplyCartEntityMixin"
+    "BoatMixin",
+    "SloopSailMixin",
+    "TFCSupplyCartEntityMixin",
+    "VesselPaddleMixin"
   ],
   "injectors": {
     "defaultRequire": 0

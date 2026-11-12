@@ -65,9 +65,10 @@ public final class PullCartCompat {
   }
 
   /**
-   * Makes the animal this player rides let go of an overloaded cart.
+   * Hands the animal this player rides, when the cart they pull is overloaded, to WeightBarHelpers.onCartOverloaded,
+   * which makes the cart let go of the player or the animal stand still with it.
    */
-  public static void refuseOverloadedCart(final Player player) {
+  public static void checkOverloadedCart(final Player player) {
     if (player.getVehicle() == null) {
       return;
     }
@@ -78,8 +79,7 @@ public final class PullCartCompat {
       final CartLoad load = getLoad(cart);
 
       if (load.isOverburdened()) {
-        setPuller(cart, null);
-        WeightBarHelpers.announceCartRefused(player.getRootVehicle(), cart, load);
+        WeightBarHelpers.onCartOverloaded(player.getRootVehicle(), cart, load, false, () -> setPuller(cart, null));
       }
     }
   }
