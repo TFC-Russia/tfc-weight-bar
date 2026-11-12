@@ -82,7 +82,11 @@ A port of MC+ Cart by andykuo1, and it knows TerraFirmaCraft's item sizes.
 `config/tfc_weight_bar-server.toml` on 1.21.1: the maximum weight (1000 by default), the Exhausted
 threshold, the points per weight class, the health rule, the Curios slot types that count
 (`curios_slots`, every slot by default), switches for the debuffs, the food exhaustion and the whole
-system, and for carts `enable_cart_limits`, `astikor_supply_cart_max_load`, `astikor_hand_cart_max_load` (the hand cart
+system, `stop_overburdened_boats` (an Overburdened player cannot row a boat), for AlekiShips and
+Firmaciv vessels on 1.20.1 `enable_vessel_limits`, `overloaded_vessel` and a limit per kind of vessel,
+and for carts
+`enable_cart_limits`, `overloaded_cart` (let go of the cart or stand still with
+it), `astikor_supply_cart_max_load`, `astikor_hand_cart_max_load` (the hand cart
 is on 1.21.1), `pull_cart_max_load`, `count_cart_riders` and the limits on
 slots of large items. It can also settle the HUD options
 below for every player on the server (`force_weight_display`, `force_bar_position`,

@@ -97,6 +97,19 @@ public class Config {
     }
   }
 
+  /**
+   * What an animal does with a cart loaded past its limit: let go of it, or keep it and stand still.
+   */
+  public enum OverloadedCart implements TranslatableEnum {
+    REFUSE,
+    STOP;
+
+    @Override
+    public Component getTranslatedName() {
+      return Component.translatable(Constants.MOD_ID + ".configuration.overloaded_cart." + name().toLowerCase(Locale.ROOT));
+    }
+  }
+
   // Client Config: Mods > TFC Weight Bar > Config edits it in game, and edits apply at once
   private static final ModConfigSpec.Builder CLIENT_BUILDER = new ModConfigSpec.Builder();
 
@@ -185,6 +198,14 @@ public class Config {
     .comment("Whether carts have a limit of weight: an animal lets go of a cart loaded past it, and tells the players around, and a player pulling such a cart on foot is burdened as by a load they carry. A cart's load is weighed as a player's inventory, containers with what they hold. With TFC Astikor Carts these are the supply cart and the hand cart, up to astikor_supply_cart_max_load and astikor_hand_cart_max_load, and that mod's own debuffs for their cargo stop; its animal cart keeps that mod's thresholds. Off, TFC Astikor Carts weighs and burdens as it does by itself. Default: true")
     .define("enable_cart_limits", true);
 
+  private static final ModConfigSpec.BooleanValue STOP_OVERBURDENED_BOATS = SERVER_BUILDER
+    .comment("Whether a player who is Overburdened, by weight or by TFC's huge and very heavy items, cannot row a boat: the boat they steer neither moves nor turns while they are, and drifts as the water takes it. Covers the vanilla boat and the boats built on it, TFC's among them. Default: true")
+    .define("stop_overburdened_boats", true);
+
+  private static final ModConfigSpec.EnumValue<OverloadedCart> OVERLOADED_CART = SERVER_BUILDER
+    .comment("Under enable_cart_limits, what an animal does with a cart loaded past its limit: REFUSE lets go of the cart, STOP keeps it and stands still, ridden or led, until the cart is under its limit again or taken off it. The server holds the animal, so STOP works whatever mods the players have. Default: REFUSE")
+    .defineEnum("overloaded_cart", OverloadedCart.REFUSE);
+
   private static final ModConfigSpec.IntValue ASTIKOR_SUPPLY_CART_MAX_LOAD = SERVER_BUILDER
     .comment("With TFC Astikor Carts: the weight a supply cart can hold before the cart is overloaded, counted as in a player's inventory. It is exhausting from exhausted_weight_percentage of this. Default: 10000")
     .defineInRange("astikor_supply_cart_max_load", 10000, 1, Integer.MAX_VALUE);
@@ -251,6 +272,8 @@ public class Config {
   public static boolean enableWeightDebuffs;
   public static boolean enableFoodExhaustion;
   public static boolean enableCartLimits;
+  public static boolean stopOverburdenedBoats = true;
+  public static OverloadedCart overloadedCart = OverloadedCart.REFUSE;
   public static int astikorSupplyCartMaxLoad;
   public static int astikorHandCartMaxLoad;
   public static int pullCartMaxLoad;
@@ -291,6 +314,8 @@ public class Config {
       enableWeightDebuffs = ENABLE_WEIGHT_DEBUFFS.get();
       enableFoodExhaustion = ENABLE_FOOD_EXHAUSTION.get();
       enableCartLimits = ENABLE_CART_LIMITS.get();
+      stopOverburdenedBoats = STOP_OVERBURDENED_BOATS.get();
+      overloadedCart = OVERLOADED_CART.get();
       astikorSupplyCartMaxLoad = ASTIKOR_SUPPLY_CART_MAX_LOAD.get();
       astikorHandCartMaxLoad = ASTIKOR_HAND_CART_MAX_LOAD.get();
       pullCartMaxLoad = PULL_CART_MAX_LOAD.get();

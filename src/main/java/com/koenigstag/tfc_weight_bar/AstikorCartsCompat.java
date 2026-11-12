@@ -73,19 +73,20 @@ public final class AstikorCartsCompat {
   }
 
   /**
-   * Makes each animal near this player let go of a cart loaded past its limit: a cart with an inventory past its
-   * astikor_*_max_load, the animal cart past what TFC Astikor Carts lets a player pull. That mod has no limit of its own
-   * for an animal.
+   * Hands each animal near this player that pulls a cart loaded past its limit to WeightBarHelpers.onCartOverloaded,
+   * which makes it let go of the cart or stand still with it: a cart with an inventory past its astikor_*_max_load, the
+   * animal cart past what TFC Astikor Carts lets a player pull. That mod has no limit of its own for an animal.
    */
-  public static void refuseOverloadedCarts(final Player player) {
+  public static void checkOverloadedCarts(final Player player) {
     for (final TFCAbstractDrawnEntity cart : player.level().getEntitiesOfClass(TFCAbstractDrawnEntity.class,
         player.getBoundingBox().inflate(CART_SEARCH_RADIUS),
         drawn -> drawn.getPulling() instanceof LivingEntity && !(drawn.getPulling() instanceof Player)
             && drawn.affectedByCargo())) {
       final CartLoad load = getLoad(cart);
 
-      if (load.isOverburdened() && !isBeingLoaded(cart)) {
-        refuse(cart, load);
+      if (load.isOverburdened()) {
+        WeightBarHelpers.onCartOverloaded(cart.getPulling(), cart, load, isBeingLoaded(cart),
+            () -> cart.setPulling(null));
       }
     }
   }
@@ -96,14 +97,6 @@ public final class AstikorCartsCompat {
     return cart.getPulling().getPassengers().isEmpty()
         && !cart.level().getEntitiesOfClass(Player.class, cart.getBoundingBox().inflate(CART_SEARCH_RADIUS),
             near -> near.containerMenu instanceof DynamicGridContainer menu && menu.container == cart).isEmpty();
-  }
-
-  private static void refuse(final TFCAbstractDrawnEntity cart, final CartLoad load) {
-    final Entity puller = cart.getPulling();
-
-    cart.setPulling(null);
-
-    WeightBarHelpers.announceCartRefused(puller, cart, load);
   }
 
   // A cart with an inventory under enable_cart_limits: what it holds weighed as a player's inventory, containers with

@@ -26,10 +26,10 @@ public final class ForgeServerEventHandler {
   @SubscribeEvent
   public static void onLevelTick(LevelTickEvent.Pre event) {
     // Before the level ticks its entities: the same moment as on 1.20.1, where it keeps a rider from
-    // being burdened by a cart that the animal is about to let go of
-    if (Config.enableWeightCalculations && Config.enableCartLimits
-        && event.getLevel() instanceof ServerLevel level) {
-      WeightBarHelpers.refuseOverloadedCarts(level);
+    // being burdened by a cart that the animal is about to let go of, and before a held animal moves.
+    // Every tick, limits on or off, so that held animals get their speed back when they are turned off.
+    if (event.getLevel() instanceof ServerLevel level) {
+      WeightBarHelpers.tickCarts(level);
     }
   }
 

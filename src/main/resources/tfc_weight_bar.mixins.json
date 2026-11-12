@@ -4,6 +4,7 @@
   "package": "com.koenigstag.tfc_weight_bar.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "BoatMixin",
     "TFCAbstractDrawnInventoryEntityMixin"
   ],
   "injectors": {
